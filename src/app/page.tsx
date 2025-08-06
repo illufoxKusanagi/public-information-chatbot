@@ -2,6 +2,38 @@
 
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/ui/app-sidebar";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { ArrowUp, Plus, Image, Paperclip } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+function ChatInput() {
+  return (
+    <div className="relative w-full max-w-3xl min-h-32">
+      <div className="absolute bottom-6 right-6">
+        <Button type="submit" size="icon" className="rounded-lg">
+          <ArrowUp className="h-5 w-5" />
+          <span className="sr-only">Send</span>
+        </Button>
+      </div>
+      <div className="absolute bottom-6 left-6 flex gap-2">
+        <AddAttachment />
+        <Button variant="outline" size="icon" className="rounded-lg w-24 ml-1">
+          <p className="body-medium-regular">FAQ</p>
+        </Button>
+      </div>
+      <Textarea
+        placeholder="Tanyakan apapun tentang Kabupaten Madiun..."
+        className="min-h-32 w-full resize-none rounded-xl p-6 pr-16 pb-20"
+      />
+    </div>
+  );
+}
 
 function MainContent() {
   return (
@@ -13,24 +45,32 @@ function MainContent() {
         </h1>
         <p className="body-big-regular">Silahkan tanyakan apapun</p>
       </div>
-      <div className="flex flex-row h-24 w-5xl rounded-xl justify-between outline-3 px-6 py-3 outline-cyan-400 ">
-        <div className="flex flex-col justify-between">
-          <p className=" text-grey-400">masukkan pertanyaan</p>
-          <div className="flex flex-row gap-8">
-            <p>Template Pertanyaan</p>
-            <p>FAQ</p>
-          </div>
-        </div>
-        <div className="flex items-center bg-sky-300">
-          <p>this is send button</p>
-        </div>
-      </div>
+      <ChatInput />
     </div>
   );
 }
 
-function TextArea() {
-  return <div></div>;
+function AddAttachment() {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="icon">
+          <Plus className="h-5 w-5" />
+          <span className="sr-only">Toggle theme</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-56" align="start">
+        <DropdownMenuItem>
+          <Image />
+          Lampirkan Foto
+        </DropdownMenuItem>
+        <DropdownMenuItem>
+          <Paperclip />
+          Lampirkan Dokumen
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 }
 
 export default function Home() {
