@@ -15,13 +15,13 @@ import {
 function ChatInput() {
   return (
     <div className="relative w-full max-w-3xl min-h-32">
-      <div className="absolute bottom-6 right-6">
+      <div className="absolute bottom-5 right-5">
         <Button type="submit" size="icon" className="rounded-lg">
           <ArrowUp className="h-5 w-5" />
           <span className="sr-only">Send</span>
         </Button>
       </div>
-      <div className="absolute bottom-6 left-6 flex gap-2">
+      <div className="absolute bottom-5 left-5 flex gap-2">
         <AddAttachment />
         <Button variant="outline" size="icon" className="rounded-lg w-24 ml-1">
           <p className="body-medium-regular">FAQ</p>
@@ -29,7 +29,7 @@ function ChatInput() {
       </div>
       <Textarea
         placeholder="Tanyakan apapun tentang Kabupaten Madiun..."
-        className="min-h-32 w-full resize-none rounded-xl p-6 pr-16 pb-20"
+        className="min-h-32 w-full resize-none rounded-xl p-5 pr-16 pb-20"
       />
     </div>
   );
