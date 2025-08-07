@@ -1,5 +1,5 @@
 "use client";
-import { Calendar, Home, Inbox, Plus, Search, Settings } from "lucide-react";
+import { Plus } from "lucide-react";
 
 import {
   Sidebar,
@@ -66,7 +66,7 @@ export function AppSidebar() {
         </SidebarHeader>
         <SidebarMenu className="p-2">
           <SidebarMenuButton variant={"block"} className="py-4" asChild>
-            <Link href="#">
+            <Link href="/">
               <Plus size="icon" />
               {open && <span>Percakapan Baru</span>}
             </Link>

@@ -9,12 +9,22 @@ export default function ChatInput() {
   const [inputValue, setInputValue] = useState("");
   const router = useRouter();
 
+  const submitMessage = () => {
+    if (!inputValue.trim()) return;
+    router.push(`/chat?message=${encodeURIComponent(inputValue)}`);
+    setInputValue("");
+  };
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!inputValue.trim()) return;
-    // Redirect to the chat page with the message as a query parameter
-    router.push(`/chat?message=${encodeURIComponent(inputValue)}`);
+    submitMessage();
   };
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      submitMessage();
+    }
+  };
+
   return (
     <form
       onSubmit={handleSubmit}
@@ -36,6 +46,7 @@ export default function ChatInput() {
         </Button>
       </div>
       <Textarea
+        onKeyDown={handleKeyDown}
         value={inputValue}
         onChange={(e) => setInputValue(e.target.value)}
         placeholder="Tanyakan apapun tentang Kabupaten Madiun..."
