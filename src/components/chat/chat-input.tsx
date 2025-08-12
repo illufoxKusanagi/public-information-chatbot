@@ -5,23 +5,33 @@ import AddAttachment from "./add-attachment";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export default function ChatInput() {
+type ChatInputProps = {
+  onSendMessage?: (message: string) => void;
+  isLoading?: boolean;
+};
+
+export default function ChatInput({
+  onSendMessage,
+  isLoading = false,
+}: ChatInputProps) {
   const [inputValue, setInputValue] = useState("");
   const router = useRouter();
 
-  const submitMessage = () => {
-    if (!inputValue.trim()) return;
-    router.push(`/chat?message=${encodeURIComponent(inputValue)}`);
-    setInputValue("");
-  };
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    submitMessage();
+    if (!inputValue.trim() || isLoading) return;
+    if (onSendMessage) {
+      onSendMessage(inputValue);
+    } else {
+      router.push(`/chat?message=${encodeURIComponent(inputValue)}`);
+    }
+    setInputValue("");
   };
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      submitMessage();
+      const form = e.currentTarget.form;
+      form?.requestSubmit();
     }
   };
 
