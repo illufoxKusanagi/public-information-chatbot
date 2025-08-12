@@ -9,6 +9,9 @@ import ChatInput from "@/components/chat/chat-input";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
 import { Message } from "@/types/chat";
 import { useChat } from "@/hooks/use-chat";
+import ReactMarkdown from "react-markdown";
+import rehypeRaw from "rehype-raw";
+import rehypeHighlight from "rehype-highlight";
 
 function TextBubble({
   role,
@@ -31,7 +34,55 @@ function TextBubble({
           isThinking && "animate-pulse"
         )}
       >
-        <p className="text-sm">{content}</p>
+        {/* <p className="body-medium-regular">{content}</p> */}
+        <section className="prose prose-sm dark:prose-invert max-w-none">
+          <ReactMarkdown
+            rehypePlugins={[rehypeRaw, rehypeHighlight]}
+            components={{
+              h1: ({ node, ...props }) => (
+                <h1 className="text-2xl font-bold my-2" {...props} />
+              ),
+              h2: ({ node, ...props }) => (
+                <h2 className="text-xl font-bold my-2" {...props} />
+              ),
+              h3: ({ node, ...props }) => (
+                <h3 className="text-lg font-bold my-2" {...props} />
+              ),
+              ul: ({ node, ...props }) => (
+                <ul className="list-disc my-2 pl-4" {...props} />
+              ),
+              ol: ({ node, ...props }) => <ol className="my-2" {...props} />,
+              p: ({ node, ...props }) => <p className="mb-2" {...props} />,
+              a: ({ node, ...props }) => (
+                <a
+                  className="text-blue-500 hover:underline"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  {...props}
+                />
+              ),
+              code: ({ node, className, children, ...props }) => {
+                const match = /language-(\w+)/.exec(className || "");
+                return match ? (
+                  <pre className="bg-gray-800 text-white p-3 my-2 rounded-md overflow-x-auto">
+                    <code className={className} {...props}>
+                      {children}
+                    </code>
+                  </pre>
+                ) : (
+                  <code
+                    className="bg-muted px-1.5 py-0.5 rounded-md"
+                    {...props}
+                  >
+                    {children}
+                  </code>
+                );
+              },
+            }}
+          >
+            {content}
+          </ReactMarkdown>
+        </section>
       </div>
     </div>
   );
@@ -52,24 +103,6 @@ function ChatHistory({
       {isLoading && (
         <TextBubble role="bot" content="Bot sedang berpikir..." isThinking />
       )}
-    </div>
-  );
-}
-
-function ChatPageContent() {
-  const { messages, isLoading, handleSendMessage } = useChat();
-
-  return (
-    <div className="flex flex-col">
-      <ScrollArea className="flex-1 overflow-y-auto h-full">
-        <Suspense fallback={<div>Loading chat...</div>}>
-          <ChatHistory isLoading={isLoading} messages={messages} />
-        </Suspense>
-      </ScrollArea>
-      <div className="flex p-2 justify-center w-full absolute bottom-6">
-        {/* This input is for follow-up messages, not implemented in this example */}
-        <ChatInput onSendMessage={handleSendMessage} isLoading={isLoading} />
-      </div>
     </div>
   );
 }
