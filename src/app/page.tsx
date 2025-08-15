@@ -6,6 +6,7 @@ import { ModeToggle } from "@/components/ui/dark-mode-toggle";
 import MainContent from "@/components/chat/main-chat-page";
 import { Button } from "@/components/ui/button";
 import { CircleQuestionMark } from "lucide-react";
+import { useState } from "react";
 
 export default function Home() {
   return (

@@ -17,16 +17,27 @@ export default function ChatInput({
   const [inputValue, setInputValue] = useState("");
   const router = useRouter();
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const submitMessage = () => {
     if (!inputValue.trim() || isLoading) return;
     if (onSendMessage) {
       onSendMessage(inputValue);
     } else {
+      // const newChatId = Date.now().toString();
+      // const newUserMessage: Message = { role: "user", content: inputValue };
+      // localStorage.setItem(
+      //   `chat-${newChatId}`,
+      //   JSON.stringify([newUserMessage])
+      // );
       router.push(`/chat?message=${encodeURIComponent(inputValue)}`);
     }
     setInputValue("");
   };
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    submitMessage();
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();

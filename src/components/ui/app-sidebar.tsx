@@ -18,6 +18,8 @@ import {
 import { cn } from "@/lib/utils";
 import { NavUser } from "./nav-user";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
 const data = {
   user: {
@@ -26,6 +28,11 @@ const data = {
     avatar: "/avatars/shadcn.jpg",
   },
 };
+
+interface ChatHistoryItem {
+  id: string;
+  title: string;
+}
 
 const items = [
   {
@@ -44,6 +51,39 @@ const items = [
 
 export function AppSidebar() {
   const { open } = useSidebar();
+  const pathname = usePathname();
+  const [chatHistory, setChatHistory] = useState<ChatHistoryItem[]>([]);
+
+  useEffect(() => {
+    const keys = Object.keys(localStorage).filter((key) =>
+      key.startsWith("chat_")
+    );
+    const history = keys
+      .map((key) => {
+        const messages = JSON.parse(localStorage.getItem(key) || "[]");
+        return {
+          id: key.replace("chat_", ""),
+          title: messages[0]?.content.substring(0, 25) + "..." || "New Chat",
+        };
+      })
+      .sort((a, b) => parseInt(b.id) - parseInt(a.id));
+    setChatHistory(history);
+  }, [pathname]);
+
+  // useEffect(() => {
+  //   const keys = Object.keys(localStorage).filter((key) =>
+  //     key.startsWith("chat_")
+  //   );
+  //   const history = keys.map((key) => {
+  //     const messages = JSON.parse(localStorage.getItem(key) || "[]");
+  //     return {
+  //       id: key.replace("chat_", ""),
+  //       title: messages[0]?.content.substring(0, 25) + "..." || "New Chat",
+  //     };
+  //   }).sort((a, b) => parseInt(b.id) - parseInt(a.id)); // Sort by newest first
+  //   setChatHistory(history);
+  // }, [pathname]); // Re-scan localStorage on route change
+
   return (
     <Sidebar variant="sidebar" collapsible="icon">
       <SidebarContent className="pt-2 relative">
@@ -74,14 +114,14 @@ export function AppSidebar() {
         </SidebarMenu>
         <SidebarGroup>
           <SidebarGroupLabel>Percakapan</SidebarGroupLabel>
-          <SidebarGroupContent>
+          <SidebarGroupContent className="max-h-[30rem] overflow-y-auto">
             <SidebarMenu>
-              {items.map((item) => (
-                <SidebarMenuItem key={item.title}>
+              {chatHistory.map((item) => (
+                <SidebarMenuItem key={item.id}>
                   <SidebarMenuButton asChild>
-                    <a href={item.url}>
+                    <Link href={`/chat?id=${item.id}`}>
                       <span>{item.title}</span>
-                    </a>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}

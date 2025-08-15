@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextRequest, NextResponse } from "next/server";
 
 const apiKey = process.env.GEMINI_API_KEY;
@@ -7,12 +7,8 @@ if (!apiKey) {
   throw new Error("GEMINI_API_KEY is not defined in environment variables.");
 }
 
-// Using the GoogleGenAI client from your code
-const ai = new GoogleGenAI({
-  apiKey: apiKey,
-});
+const genAI = new GoogleGenerativeAI(apiKey);
 
-// The function signature MUST return a Promise<NextResponse>
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const { message } = await request.json();
@@ -24,20 +20,22 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    // Using the model call from your code.
-    // Note: The 'contents' property expects an array of Content objects.
-    const response = await ai.models.generateContent({
-      model: "gemini-1.5-flash", // Using 1.5-flash as it's generally available. "gemini-2.5-flash" is not a valid model name yet.
-      contents: [{ role: "user", parts: [{ text: message }] }],
-    });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const result = await model.generateContent(message);
+    const response = await result.response;
+    const text = response.text();
 
-    // The API route MUST return a NextResponse object with JSON.
     return NextResponse.json({
-      reply: response.text ?? "No content generated",
+      reply: text || "No content generated",
     });
   } catch (error) {
     console.error("Error in /api/chat:", error);
-    // The catch block MUST also return a NextResponse object.
+    if (error instanceof Error && error.message.includes("quota")) {
+      return NextResponse.json(
+        { error: "API quota exceeded. Please try again later." },
+        { status: 429 }
+      );
+    }
     return NextResponse.json(
       { error: "Failed to generate response from AI." },
       { status: 500 }
