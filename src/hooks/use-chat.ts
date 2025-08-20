@@ -73,12 +73,6 @@ export function useChat() {
       if (storedMessages) {
         const parsedMessages = JSON.parse(storedMessages);
         setMessages(parsedMessages);
-        // if (
-        //   parsedMessages.length > 0 &&
-        //   parsedMessages[parsedMessages.length - 1].role === "user"
-        // ) {
-        //   sendMessageToServer(parsedMessages);
-        // }
       } else {
         setMessages([]);
       }
