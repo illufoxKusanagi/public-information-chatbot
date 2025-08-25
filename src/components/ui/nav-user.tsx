@@ -14,6 +14,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import Link from "next/link";
 
 export function NavUser({
   user,
@@ -53,8 +54,10 @@ export function NavUser({
             sideOffset={4}
           >
             <DropdownMenuItem>
-              <LogOut />
-              Log out
+              <Link href="/auth/login">
+                <LogOut />
+                Log out
+              </Link>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
