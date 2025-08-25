@@ -18,23 +18,30 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 
 const schema = z.object({
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(1, "Password is required"),
+  identifier: z.string().min(1, "Email atau password harus diisi"),
+  password: z.string().min(1, "Password harus diisi"),
 });
 
 type FormData = z.infer<typeof schema>;
 
 export default function LoginPage() {
   const router = useRouter();
-  const {
-    register,
-    handleSubmit,
-    setError,
-    formState: { errors, isSubmitting },
-  } = useForm<FormData>({
+  const form = useForm<FormData>({
     resolver: zodResolver(schema),
+    defaultValues: {
+      identifier: "",
+      password: "",
+    },
   });
 
   const onSubmit: SubmitHandler<FormData> = async (data) => {
@@ -46,89 +53,95 @@ export default function LoginPage() {
         },
         body: JSON.stringify(data),
       });
-
       const result = await response.json();
-
       if (!response.ok) {
-        toast.error(result.error || "Login failed. Please try again.");
-        setError("root", {
+        form.setError("root", {
           type: "manual",
-          message: result.error || "Invalid credentials",
+          message: result.error || "Login gagal, silahkan coba lagi",
         });
         return;
       }
-
-      toast.success(
-        `Login successful! Okaerinasai! ${result.user.username}-san`
-      );
+      toast.success(`Login berhasil, Okaerinasai, ${result.user.name}-san!`);
       router.push("/");
     } catch (error) {
-      toast.error("An unexpected error occurred. Please try again.");
+      toast.error("Login gagal, silahkan coba lagi");
     }
   };
 
   return (
     <div className="flex h-screen items-center justify-center">
-      <Card className="w-full max-w-sm">
-        <CardHeader>
+      <Card className="w-full max-w-xs">
+        <CardHeader className="text-center m-2">
           <CardTitle>Login</CardTitle>
           <CardDescription>
-            Enter your email below to login to your account
+            Masukkan email atau username anda untuk melanjutkan
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <div className="flex flex-col gap-6">
-              <div className="grid gap-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  {...register("email")}
-                  id="email"
-                  type="email"
-                  placeholder="m@example.com"
-                />
-                {errors.email && (
-                  <p className="text-xs text-red-500">{errors.email.message}</p>
+          {/* 5. Refactored to use the shadcn/ui Form component */}
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <FormField
+                control={form.control}
+                name="identifier"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Username atau Email</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="text"
+                        placeholder="john.doe@example.com"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )}
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  {...register("password")}
-                  id="password"
-                  type="password"
-                />
-                {errors.password && (
-                  <p className="text-xs text-red-500">
-                    {errors.password.message}
-                  </p>
+              />
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <Input type="password" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )}
-              </div>
-              {errors.root && (
-                <p className="text-xs text-red-500">{errors.root.message}</p>
+              />
+              {form.formState.errors.root && (
+                <p className="text-sm font-medium text-destructive">
+                  {form.formState.errors.root.message}
+                </p>
               )}
-              <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? "Signing In..." : "Sign In"}
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={form.formState.isSubmitting}
+              >
+                {form.formState.isSubmitting ? "Memproses..." : "Masuk"}
               </Button>
-            </div>
-          </form>
+            </form>
+          </Form>
         </CardContent>
         <CardFooter className="flex-col gap-4">
-          <div className="flex w-full items-center gap-2">
+          <div className="flex flex-col w-full gap-1 items-center">
             <Separator />
-            <span className="text-xs text-muted-foreground">Or</span>
+            <p className="body-small-regular text-gray-400">Atau</p>
             <Separator />
           </div>
           <Button variant="outline" className="w-full">
-            Sign In with Google
+            Masuk dengan Google
           </Button>
           <CardDescription className="text-center text-sm">
-            Don't have an account?{" "}
+            Belum punya akun?{" "}
             <Link
               href={"/auth/register"}
               className="text-primary hover:underline"
             >
-              Sign up
+              Daftar disini
             </Link>
           </CardDescription>
         </CardFooter>

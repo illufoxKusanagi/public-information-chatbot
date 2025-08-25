@@ -7,7 +7,7 @@ import { ModeToggle } from "@/components/ui/dark-mode-toggle";
 import { cn } from "@/lib/utils";
 import ChatInput from "@/components/chat/chat-input";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
-import { Message } from "@/types/chat";
+import { Message } from "@/lib/types/chat";
 import { useChat } from "@/hooks/use-chat";
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";

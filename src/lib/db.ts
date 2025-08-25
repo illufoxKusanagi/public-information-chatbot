@@ -1,27 +1,23 @@
-"use server";
+// "use server";
 
-import postgres from "postgres";
+// import postgres from "postgres";
 
-const sql = postgres(process.env.DATABASE_URL!);
+// const sql = postgres(process.env.DATABASE_URL!);
 
-export async function testDatabaseConnection() {
-  try {
-    const result = await sql`SELECT NOW()`;
-    console.log("✅ Database connected successfully!");
-    console.log("📅 Current database time:", result[0].now);
+// export async function testDatabaseConnection() {
+//   try {
+//     const result = await sql`SELECT NOW()`;
+//     console.log("✅ Database connected successfully!");
+//     console.log("📅 Current database time:", result[0].now);
 
-    // Test pgvector extension
-    await sql`CREATE EXTENSION IF NOT EXISTS vector`;
-    console.log("🔍 Vector extension ready");
+//     return { success: true, message: "Connected successfully" };
+//   } catch (error) {
+//     console.error("❌ Database connection failed:", error);
+//     return {
+//       success: false,
+//       error: error instanceof Error ? error.message : "Unknown error",
+//     };
+//   }
+// }
 
-    return { success: true, message: "Connected successfully" };
-  } catch (error) {
-    console.error("❌ Database connection failed:", error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown error",
-    };
-  }
-}
-
-export { sql };
+// export { sql };

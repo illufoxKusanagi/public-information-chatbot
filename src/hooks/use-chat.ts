@@ -1,4 +1,4 @@
-import { Message } from "@/types/chat";
+import { Message } from "@/lib/types/chat";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";

@@ -19,22 +19,22 @@ export default function Home() {
   const [dbStatus, setDbStatus] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const testDatabaseConnection = async () => {
+  const insertTestRagData = async () => {
     setIsLoading(true);
-    setDbStatus("Testing...");
-
+    setDbStatus("");
     try {
-      const response = await fetch("/api/test-db");
-      const data = await response.json();
-
-      if (data.status === "success") {
-        setDbStatus("✅ Database Connected!");
+      const response = await fetch("/api/test-db", {
+        method: "POST",
+      });
+      const result = await response.json();
+      if (response.ok) {
+        setDbStatus("Insert users succesful!");
       } else {
-        setDbStatus("❌ Connection Failed");
+        console.error("Error inserting data:", result.error);
+        setDbStatus(`Error: ${result.message}`);
       }
     } catch (error) {
-      setDbStatus("❌ Error occurred");
-      console.error("API call failed:", error);
+      setDbStatus(`Error: ${(error as Error).message}`);
     } finally {
       setIsLoading(false);
     }
@@ -66,15 +66,15 @@ export default function Home() {
       </SidebarProvider>
       <footer className="flex flex-col w-full items-center absolute h-fit bottom-0">
         <p className="body-small-regular">Made with 💗 by Illufox Kasunagi</p>
-        {/* {dbStatus && <p className="text-sm font-medium">{dbStatus}</p>}
+        {dbStatus && <p className="text-sm font-medium">{dbStatus}</p>}
         <Button
-          onClick={testDatabaseConnection}
+          onClick={insertTestRagData}
           disabled={isLoading}
           variant="outline"
         >
           <Bubbles size="icon" className="m-2" />
           {isLoading ? "Testing..." : "Test Database"}
-        </Button> */}
+        </Button>
       </footer>
     </div>
   );

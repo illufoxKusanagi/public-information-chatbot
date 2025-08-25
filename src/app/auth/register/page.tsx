@@ -10,26 +10,31 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { z } from "zod";
 import { UserRole } from "@/lib/definitions";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-type FormData = z.infer<typeof schema>;
-
-const staticUser = {
-  id: 1,
-  username: "Illufox Kasunagi",
-  email: "test@gmail.com",
-  password: "password",
-  role: UserRole.User,
-  profileUrl: "https://avatars.githubusercontent.com/u/12345678?v=4",
-};
-
+// Zod schema for form validation
 const schema = z.object({
   username: z
     .string()
@@ -37,112 +42,169 @@ const schema = z.object({
     .max(20, "Username maksimal 20 karakter"),
   email: z.string().email("Alamat email tidak valid"),
   password: z.string().min(8, "Password minimal 8 karakter"),
+  // Use nativeEnum for enums in Zod
+  role: z.enum(UserRole),
 });
 
+type FormData = z.infer<typeof schema>;
+
 export default function RegisterPage() {
-  const {
-    register,
-    handleSubmit,
-    setError,
-    formState: { errors, isSubmitting },
-  } = useForm<FormData>({
+  const router = useRouter();
+  const form = useForm<FormData>({
+    resolver: zodResolver(schema),
     defaultValues: {
       username: "",
       email: "",
       password: "",
+      role: UserRole.User,
     },
-    resolver: zodResolver(schema),
   });
+
   const onSubmit: SubmitHandler<FormData> = async (data) => {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      //   throw new Error("Simulated server error"); // Simulate an error for demonstration
-      toast.success(
-        `User ${data.username} berhasil terdaftar dengan : ${data.email} dengan password: ${data.password}`
-      );
-      console.log(staticUser);
-    } catch (error) {
-      setError("email", {
-        type: "manual",
-        message: "Email sudah terdaftar",
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
       });
-      toast.error("Gagal mendaftar, silakan coba lagi.");
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        // If the server says the email exists, show an error on the form
+        if (response.status === 409) {
+          form.setError("email", {
+            type: "manual",
+            message: "Email sudah terdaftar.",
+          });
+        }
+        throw new Error(result.error || "Gagal mendaftar.");
+      }
+
+      toast.success(
+        "Akun berhasil dibuat! Anda akan dialihkan ke halaman login."
+      );
+      // Redirect to login page after a short delay
+      setTimeout(() => {
+        router.push("/auth/login");
+      }, 2000);
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Gagal mendaftar, silakan coba lagi."
+      );
     }
   };
+
   return (
-    <div className="flex h-screen items-center justify-center">
-      <Card className="w-full max-w-sm">
-        <CardHeader>
-          <CardTitle>Create an account</CardTitle>
+    <div className="flex h-screen items-center justify-center overflow-auto">
+      <Card className="w-full max-w-xs">
+        <CardHeader className="text-center m-2">
+          <CardTitle>Buat akun</CardTitle>
           <CardDescription>
-            Enter your details below to create your account
+            Masukkan detail Anda untuk membuat akun
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <div className="flex flex-col gap-6">
-              <div className="grid gap-2">
-                <Label htmlFor="username">Username</Label>
-                <Input
-                  {...register("username")}
-                  id="username"
-                  type="input"
-                  placeholder="John Doe"
-                />
-                {errors.username && (
-                  <p className="text-xs text-red-500">
-                    {errors.username.message}
-                  </p>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <FormField
+                control={form.control}
+                name="username"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Username</FormLabel>
+                    <FormControl>
+                      <Input placeholder="John Doe" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )}
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  {...register("email")}
-                  id="email"
-                  type="email"
-                  placeholder="m@example.com"
-                />
-                {errors.email && (
-                  <p className="text-xs text-red-500">{errors.email.message}</p>
+              />
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="email"
+                        placeholder="m@example.com"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )}
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  {...register("password")}
-                  id="password"
-                  type="password"
-                />
-                {errors.password && (
-                  <p className="text-xs text-red-500">
-                    {errors.password.message}
-                  </p>
+              />
+              <FormField
+                control={form.control}
+                name="role"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Role</FormLabel>
+                    <Select
+                      onValueChange={(value) => field.onChange(Number(value))}
+                      defaultValue={String(field.value)}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select a role" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {Object.keys(UserRole)
+                          .filter((key) => !isNaN(Number(key)))
+                          .map((key) => (
+                            <SelectItem key={key} value={key}>
+                              {UserRole[Number(key)]}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
                 )}
-              </div>
-              <Button disabled={isSubmitting} type="submit" className="w-full">
-                {isSubmitting ? "Membuat akun..." : "Daftar"}
+              />
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <Input type="password" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button
+                disabled={form.formState.isSubmitting}
+                type="submit"
+                className="w-full"
+              >
+                {form.formState.isSubmitting ? "Membuat akun..." : "Daftar"}
               </Button>
-            </div>
-          </form>
+            </form>
+          </Form>
         </CardContent>
-        <CardFooter className="flex-col gap-2">
-          {/* <form onSubmit={handleSubmit(onSubmit)}></form> */}
-          {/* <CardDescription> */}
-          {/* <div className="flex flex-row w-32"> */}
-          <Separator className="self-center" />
-          {/* <p>Or</p>
-              <Separator className="self-center w-2" />
-            </div>
-          </CardDescription> */}
+        <CardFooter className="flex-col gap-4">
+          <div className="flex flex-col w-full gap-1 items-center">
+            <Separator />
+            <p className="body-small-regular text-gray-400">Atau</p>
+            <Separator />
+          </div>
           <Button variant="outline" className="w-full">
-            Sign Up with Google
+            Lanjutkan dengan Google
           </Button>
           <CardDescription className="text-center">
-            Already have an account?{" "}
-            <span className="text-primary hover:underline">
-              <Link href={"login"}>login</Link>
-            </span>
+            Sudah punya akun?{" "}
+            <Link href={"login"} className="text-primary hover:underline">
+              Login disini
+            </Link>
           </CardDescription>
         </CardFooter>
       </Card>

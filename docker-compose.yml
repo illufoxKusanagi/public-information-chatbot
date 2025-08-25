@@ -11,8 +11,11 @@ services:
       - /app/node_modules
     env_file:
       - .env.local
+    command: npm run dev
+    depends_on:
+      - postgres
   postgres:
-    image: postgres:latest
+    image: pgvector/pgvector:pg15
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: IllufoxKasunagi506273

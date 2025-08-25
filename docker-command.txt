@@ -1,5 +1,0 @@
-# To build this app to docker image
-docker build -t react-app:dev .
-
-# To run project 
-docker run -p 3000:3000 react-app:dev

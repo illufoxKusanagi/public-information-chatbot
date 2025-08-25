@@ -1,93 +1,46 @@
 import { z } from "zod";
 import { NextRequest, NextResponse } from "next/server";
+import { loginUser } from "@/lib/services/auth/auth.service";
 
 const loginSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(1, "Password is required"),
+  identifier: z.string().min(1, "Masukkan email atau password"),
+  password: z.string().min(1, "Masukkan password"),
 });
 
-const staticUser = {
-  id: "1",
-  username: "Illufox Kasunagi",
-  email: "test@gmail.com",
-  password: "password",
-};
-
-export async function POST(req: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
-    const body = await req.json();
-    const parsedCredentials = loginSchema.safeParse(body);
-    if (!parsedCredentials.success) {
+    const body = await request.json();
+    const validation = loginSchema.safeParse(body);
+    if (!validation.success) {
       return NextResponse.json(
-        { error: "Invalid request format" },
+        {
+          error: "Input tidak valid.",
+          details: z.flattenError(validation.error),
+        },
         { status: 400 }
       );
     }
-    const { email, password } = parsedCredentials.data;
-    if (email !== staticUser.email || password !== staticUser.password) {
+    const user = await loginUser(validation.data);
+    return NextResponse.json({
+      message: "Login berhasil!",
+      user: user,
+    });
+  } catch (error) {
+    if (error instanceof Error) {
       return NextResponse.json(
-        { error: "Invalid email or password" },
+        {
+          message: error.message,
+        },
         { status: 401 }
       );
+    } else {
+      return NextResponse.json(
+        {
+          error:
+            "Server internal mengalami kesalahan, silahkan coba lagi nanti",
+        },
+        { status: 500 }
+      );
     }
-
-    const { password: _, ...user } = staticUser;
-    return NextResponse.json({ user }, { status: 200 });
-  } catch (error) {
-    return NextResponse.json(
-      { error: "An internal server error occurred" },
-      { status: 500 }
-    );
   }
 }
-
-// FOR RATE LIMITING
-// Uncomment the following code to implement rate limiting
-
-// import { z } from "zod";
-// import { NextRequest, NextResponse } from "next/server";
-
-// const loginSchema = z.object({
-// // ...existing code...
-//   password: "password",
-// };
-
-// // Simple in-memory store for rate limiting.
-// // In a real production app, use a more persistent store like Redis.
-// const loginAttempts = new Map<string, { count: number; expiry: number }>();
-// const MAX_ATTEMPTS = 5;
-// const LOCKOUT_PERIOD = 15 * 60 * 1000; // 15 minutes
-
-// export async function POST(req: NextRequest) {
-//   const ip = req.ip ?? "127.0.0.1";
-//   const attempt = loginAttempts.get(ip);
-
-//   if (attempt && attempt.count >= MAX_ATTEMPTS && attempt.expiry > Date.now()) {
-//     return NextResponse.json(
-//       { error: "Too many failed login attempts. Please try again later." },
-//       { status: 429 } // Too Many Requests
-//     );
-//   }
-
-//   try {
-//     const body = await req.json();
-// // ...existing code...
-//     const { email, password } = parsedCredentials.data;
-//     if (email !== staticUser.email || password !== staticUser.password) {
-//       // Increment failed attempts for this IP
-//       const newCount = (attempt?.count || 0) + 1;
-//       loginAttempts.set(ip, { count: newCount, expiry: Date.now() + LOCKOUT_PERIOD });
-
-//       return NextResponse.json(
-//         { error: "Invalid email or password" },
-//         { status: 401 }
-//       );
-//     }
-
-//     // On successful login, clear any previous failed attempts for this IP
-//     loginAttempts.delete(ip);
-
-//     const { password: _, ...user } = staticUser;
-//     return NextResponse.json({ user }, { status: 200 });
-//   } catch (error) {
-// // ...existing code...
