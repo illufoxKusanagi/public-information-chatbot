@@ -1,6 +1,6 @@
 {
-  "id": "8abec98d-6a29-4d53-b745-2f6b12053ce1",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "5c87af02-463b-4c5b-ae63-4eae60a683a4",
+  "prevId": "8abec98d-6a29-4d53-b745-2f6b12053ce1",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -72,6 +72,12 @@
           "primaryKey": true,
           "notNull": true
         },
+        "content": {
+          "name": "content",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
         "data": {
           "name": "data",
           "type": "jsonb",
@@ -80,7 +86,7 @@
         },
         "embedding": {
           "name": "embedding",
-          "type": "vector(384)",
+          "type": "vector(768)",
           "primaryKey": false,
           "notNull": false
         },

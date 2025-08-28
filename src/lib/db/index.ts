@@ -1,7 +1,7 @@
 import postgres from "postgres";
 import { drizzle } from "drizzle-orm/postgres-js";
 import * as schema from "./schema";
-import { eq, ilike, or } from "drizzle-orm";
+import { cosineDistance, eq, ilike, or, desc, gt, sql } from "drizzle-orm";
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
@@ -9,8 +9,8 @@ if (!connectionString) {
     "DATABASE_URL is not set in the environment variables. Please check your .env.local file."
   );
 }
-const sql = postgres(connectionString);
-export const db = drizzle(sql, { schema });
+const sql_db = postgres(connectionString);
+export const db = drizzle(sql_db, { schema });
 
 export async function insertRagData(
   data: schema.InsertRagData | schema.InsertRagData[]
@@ -45,6 +45,7 @@ export async function findUserByIdentifier(identifier: string) {
     });
     return user;
   } catch (error) {
+    console.error("Error finding user by identifier:", error);
     return null;
   }
 }
@@ -56,17 +57,33 @@ export async function findUserByEmail(email: string) {
     });
     return user;
   } catch (error) {
+    console.error("Error finding user by email:", error);
     return null;
   }
 }
 
 export async function searchRagData(searchTerm: string) {
   try {
+    const similarity = sql<number>`${cosineDistance(
+      schema.ragData.embedding,
+      embedding
+    )}`;
+    // Jalankan query untuk mencari data yang paling mirip
     const results = await db
+      .select({
+        // Kita ambil 'content' dan 'metadata' untuk dijadikan CONTEXT di RAG
+        content: schema.ragData.data,
+        metadata: schema.ragData.metadata,
+      })
+      .from(schema.ragData)
+      .where(gt(similarity, 0.75)) // Ambil hasil dengan kemiripan di atas 75% (bisa disesuaikan)
+      .orderBy(desc(similarity)) // Urutkan dari yang paling mirip
+      .limit(5); // Batasi hingga 5 hasil teratas
+    const resultses = await db
       .select()
       .from(schema.ragData)
       .where(ilike(schema.ragData.data, `%${searchTerm}%`));
-    return results;
+    return resultses;
   } catch (error) {
     return [];
   }

@@ -21,24 +21,25 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
-  const userId = 1;
-  try {
-    const newChat = await db
-      .insert(chatHistory)
-      .values({
-        userId: userId,
-        title: "New Chat",
-        messages: [],
-      })
-      .returning();
-    return NextResponse.json(newChat[0], { status: 200 });
-  } catch (error) {
-    return NextResponse.json(
-      {
-        error: "Failed to create a new chat",
-      },
-      { status: 500 }
-    );
-  }
-}
+// export async function POST(request: NextRequest) {
+//   const userId = 1;
+//   try {
+//     const newChat = await db
+//       .insert(chatHistory)
+//       .values({
+//         userId: userId,
+//         title: "New Chat",
+//         messages: [],
+//       })
+//       .returning();
+//     return NextResponse.json(newChat[0], { status: 200 });
+//   } catch (error) {
+//     console.error(error);
+//     return NextResponse.json(
+//       {
+//         error: "Failed to create a new chat",
+//       },
+//       { status: 500 }
+//     );
+//   }
+// }

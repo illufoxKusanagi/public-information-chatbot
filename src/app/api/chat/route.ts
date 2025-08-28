@@ -1,4 +1,4 @@
-import { searchRagData } from "@/lib/db/index";
+import { findRelevantContents } from "@/lib/services/ai/rag.service";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -12,10 +12,10 @@ const genAI = new GoogleGenerativeAI(apiKey);
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const { message } = await request.json();
-  const userMessage = message[message.length - 1];
-
+  const userMessage = message.content;
   try {
-    const contextData = await searchRagData(userMessage.content);
+    const contextData = await findRelevantContents(userMessage);
+    // console.log("Context Data:", contextData);
     const context =
       contextData.length > 0
         ? `
@@ -39,10 +39,8 @@ PERATURAN PENTING:
 6.  Jika pengguna hanya menyapa (misal: "halo", "selamat pagi"), jawab sapaan tersebut dengan ramah tanpa mencari informasi.
 `;
 
-    const augmentedPrompt = `${systemPrompt} ${context}
-      PERTANYAAN PENGGUNA: "${userMessage.content}"
-JAWABAN ANDA: 
-`;
+    const augmentedPrompt = `${systemPrompt} ${context}\nPERTANYAAN PENGGUNA: "${userMessage}"\nJAWABAN ANDA:`;
+
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
     const result = await model.generateContent(augmentedPrompt);
     const text = result.response.text();

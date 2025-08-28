@@ -9,6 +9,7 @@ CREATE TABLE "chat_history" (
 CREATE TABLE "rag_data" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"data" jsonb NOT NULL,
+	"embedding" vector(384),
 	"created_at" timestamp DEFAULT now()
 );
 --> statement-breakpoint

@@ -5,6 +5,7 @@ import {
   jsonb,
   timestamp,
   integer,
+  vector,
 } from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
@@ -19,7 +20,9 @@ export const users = pgTable("users", {
 
 export const ragData = pgTable("rag_data", {
   id: serial("id").primaryKey(),
+  content: text("content"),
   data: jsonb("data").notNull(),
+  embedding: vector("embedding", { dimensions: 768 }),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

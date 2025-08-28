@@ -12,36 +12,39 @@ export function useChat() {
   const initialMessage = searchParams.get("message");
   const hasProcessedInitialMessage = useRef(false);
 
-  const sendMessageToServer = useCallback(
-    async (currentMessages: Message[]) => {
-      const userMessage = currentMessages.findLast(
-        (m) => m.role === "user"
-      )?.content;
-      if (!userMessage) return;
+  // const sendMessageToServer = useCallback(
+  //   async (currentMessages: Message[]) => {
+  //     const userMessage = currentMessages.findLast(
+  //       (m) => m.role === "user"
+  //     )?.content;
+  //     if (!userMessage) return;
 
-      setIsLoading(true);
-      try {
-        const response = await fetch("/api/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: userMessage }),
-        });
-        if (!response.ok) throw new Error(`API Error: ${response.statusText}`);
-        const data = await response.json();
-        setMessages((prev) => [...prev, { role: "bot", content: data.reply }]);
-      } catch (error) {
-        console.error("Error sending message:", error);
-        setMessages((prev) => [
-          ...prev,
-          { role: "bot", content: "Maaf, terjadi kesalahan" },
-        ]);
-        toast.error("Terjadi kesalahan saat memproses pesan.");
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    []
-  );
+  //     setIsLoading(true);
+  //     try {
+  //       const response = await fetch("/api/chat", {
+  //         method: "POST",
+  //         headers: { "Content-Type": "application/json" },
+  //         body: JSON.stringify({ message: userMessage }),
+  //       });
+  //       if (!response.ok) throw new Error(`API Error: ${response.statusText}`);
+  //       const data = await response.json();
+  //       setMessages((prev) => [
+  //         ...prev,
+  //         { role: "bot", content: data.content },
+  //       ]);
+  //     } catch (error) {
+  //       console.error("Error sending message:", error);
+  //       setMessages((prev) => [
+  //         ...prev,
+  //         { role: "bot", content: "Maaf, terjadi kesalahan" },
+  //       ]);
+  //       toast.error("Terjadi kesalahan saat memproses pesan.");
+  //     } finally {
+  //       setIsLoading(false);
+  //     }
+  //   },
+  //   []
+  // );
 
   const handleSendMessage = useCallback(
     async (message: string) => {
@@ -49,50 +52,74 @@ export function useChat() {
 
       const newUserMessage: Message = { role: "user", content: message };
 
-      if (chatId) {
-        const updatedMessages = [...messages, newUserMessage];
-        setMessages(updatedMessages);
-        await sendMessageToServer(updatedMessages);
-      } else {
-        const newChatId = `${Date.now()}-${Math.random()
-          .toString(36)
-          .substr(2, 9)}`;
-        const newMessages = [newUserMessage];
-        localStorage.setItem(`chat_${newChatId}`, JSON.stringify(newMessages));
-        router.replace(`/chat?id=${newChatId}`);
-        await sendMessageToServer(newMessages);
+      const updatedMessages = [...messages, newUserMessage];
+      setMessages(updatedMessages);
+      setIsLoading(true);
+      try {
+        const response = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: newUserMessage }),
+        });
+        if (!response.ok) throw new Error(`API Error: ${response.statusText}`);
+        const data = await response.json();
+        setMessages((prev) => [
+          ...prev,
+          { role: "bot", content: data.content },
+        ]);
+      } catch (error) {
+        console.error("Error sending message:", error);
+        setMessages((prev) => [
+          ...prev,
+          { role: "bot", content: "Gagal mengirim pesan" },
+        ]);
+        toast.error("Terjadi kesalahan saat memproses pesan.");
+      } finally {
+        setIsLoading(false);
       }
+      // if (chatId) {
+      //   await sendMessageToServer(updatedMessages);
+      // } else {
+      //   const newChatId = `${Date.now()}-${Math.random()
+      //     .toString(36)
+      //     .substr(2, 9)}`;
+      //   const newMessages = [newUserMessage];
+
+      //   // localStorage.setItem(`chat_${newChatId}`, JSON.stringify(newMessages));
+      //   router.replace(`/chat?id=${newChatId}`);
+      //   await sendMessageToServer(newMessages);
+      // }
     },
-    [chatId, messages, isLoading, sendMessageToServer, router]
+    [messages, isLoading]
   );
 
-  useEffect(() => {
-    if (chatId) {
-      hasProcessedInitialMessage.current = false;
-      const storedMessages = localStorage.getItem(`chat_${chatId}`);
-      if (storedMessages) {
-        const parsedMessages = JSON.parse(storedMessages);
-        setMessages(parsedMessages);
-      } else {
-        setMessages([]);
-      }
-    } else {
-      setMessages([]);
-    }
-  }, [chatId]);
+  // useEffect(() => {
+  //   if (chatId) {
+  //     hasProcessedInitialMessage.current = false;
+  //     const storedMessages = localStorage.getItem(`chat_${chatId}`);
+  //     if (storedMessages) {
+  //       const parsedMessages = JSON.parse(storedMessages);
+  //       setMessages(parsedMessages);
+  //     } else {
+  //       setMessages([]);
+  //     }
+  //   } else {
+  //     setMessages([]);
+  //   }
+  // }, [chatId]);
 
-  useEffect(() => {
-    if (initialMessage && !chatId && !hasProcessedInitialMessage.current) {
-      hasProcessedInitialMessage.current = true;
-      handleSendMessage(initialMessage);
-    }
-  }, [initialMessage, chatId, handleSendMessage]);
+  // useEffect(() => {
+  //   if (initialMessage && !chatId && !hasProcessedInitialMessage.current) {
+  //     hasProcessedInitialMessage.current = true;
+  //     handleSendMessage(initialMessage);
+  //   }
+  // }, [initialMessage, chatId, handleSendMessage]);
 
-  useEffect(() => {
-    if (chatId && messages.length > 0) {
-      localStorage.setItem(`chat_${chatId}`, JSON.stringify(messages));
-    }
-  }, [messages, chatId]);
+  // useEffect(() => {
+  //   if (chatId && messages.length > 0) {
+  //     localStorage.setItem(`chat_${chatId}`, JSON.stringify(messages));
+  //   }
+  // }, [messages, chatId]);
 
   return {
     messages,

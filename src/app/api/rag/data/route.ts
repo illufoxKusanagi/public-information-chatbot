@@ -2,6 +2,7 @@ import { insertRagData } from "@/lib/db/index";
 import { NextResponse } from "next/server";
 const ragDataToInsert = [
   {
+    content: "Ir. Tontro Pahlawanto menjabat sebagai Sekretaris Daerah.",
     data: {
       type: "pejabat",
       name: "Tontro Pahlawanto",
@@ -12,6 +13,8 @@ const ragDataToInsert = [
     },
   },
   {
+    content:
+      "Mohamad Hadi Sutikno, S.Sos, M.Si menjabat sebagai Kepala Badan Pendapatan Daerah.",
     data: {
       type: "pejabat",
       name: "Mohamad Hadi Sutikno",
@@ -22,6 +25,8 @@ const ragDataToInsert = [
     },
   },
   {
+    content:
+      "Sodik Hery Purnomo, S.Si menjabat sebagai Asisten Perekonomian dan Pembangunan.",
     data: {
       type: "pejabat",
       name: "Sodik Hery Purnomo",
@@ -32,6 +37,8 @@ const ragDataToInsert = [
     },
   },
   {
+    content:
+      "Kurnia Aminulloh, SH menjabat sebagai Kepala Badan Perencanaan Pembangunan Daerah.",
     data: {
       type: "pejabat",
       name: "Kurnia Aminulloh",
@@ -42,6 +49,8 @@ const ragDataToInsert = [
     },
   },
   {
+    content:
+      "Anang Sulistijono, S.Sos., M.Si menjabat sebagai Kepala Dinas Pariwisata, Pemuda dan Olah Raga.",
     data: {
       type: "pejabat",
       name: "Anang Sulistijono",
@@ -52,6 +61,8 @@ const ragDataToInsert = [
     },
   },
   {
+    content:
+      "Indra Setyawan, SE, M.Si menjabat sebagai Kepala Dinas Perdagangan, Koperasi, dan Usaha Mikro.",
     data: {
       type: "pejabat",
       name: "Indra Setyawan",
@@ -62,6 +73,8 @@ const ragDataToInsert = [
     },
   },
   {
+    content:
+      "Dra. Siti Zubaidah, M.H menjabat sebagai Kepala Dinas Pendidikan dan Kebudayaan.",
     data: {
       type: "pejabat",
       name: "Siti Zubaidah",
@@ -72,6 +85,7 @@ const ragDataToInsert = [
     },
   },
   {
+    content: "Joko Lelono, AP, M.H menjabat sebagai Inspektur.",
     data: {
       type: "pejabat",
       name: "Joko Lelono",
@@ -82,6 +96,7 @@ const ragDataToInsert = [
     },
   },
   {
+    content: "Yudi Hartono, S.Sos, MM menjabat sebagai Sekretaris DPRD.",
     data: {
       type: "pejabat",
       name: "Yudi Hartono",
@@ -92,6 +107,8 @@ const ragDataToInsert = [
     },
   },
   {
+    content:
+      "Drs. Sawung Rehtomo, M.Si menjabat sebagai Kepala Dinas Komunikasi dan Informatika.",
     data: {
       type: "pejabat",
       name: "Sawung Rehtomo",
@@ -102,6 +119,7 @@ const ragDataToInsert = [
     },
   },
   {
+    content: "Supriyadi, AP., M.Si menjabat sebagai Kepala Dinas Perhubungan.",
     data: {
       type: "pejabat",
       name: "Supriyadi",
@@ -112,6 +130,8 @@ const ragDataToInsert = [
     },
   },
   {
+    content:
+      "Arik Krisdiananto, S.STP., M.H. menjabat sebagai Kepala Dinas Penanaman Modal dan Pelayanan Terpadu Satu Pintu.",
     data: {
       type: "pejabat",
       name: "Arik Krisdiananto",
@@ -122,6 +142,8 @@ const ragDataToInsert = [
     },
   },
   {
+    content:
+      "Didik Harianto, S.Sos, MM menjabat sebagai Kepala Satuan Polisi Pamong Praja.",
     data: {
       type: "pejabat",
       name: "Didik Harianto",
@@ -132,6 +154,8 @@ const ragDataToInsert = [
     },
   },
   {
+    content:
+      "Ir. Soedjiono, MT menjabat sebagai Asisten Pemerintahan Dan Kesejahteraan Rakyat.",
     data: {
       type: "pejabat",
       name: "Soedjiono",
@@ -142,6 +166,8 @@ const ragDataToInsert = [
     },
   },
   {
+    content:
+      "Suryanto, SE., M.Si menjabat sebagai Kepala Dinas Pengendalian Penduduk dan Keluarga Berencana, Pemberdayaan Perempuan dan Perlindungan Anak.",
     data: {
       type: "pejabat",
       name: "Suryanto",
@@ -152,6 +178,8 @@ const ragDataToInsert = [
     },
   },
   {
+    content:
+      "Heru Kuncoro, S.Sos, M.Si menjabat sebagai Kepala Badan Kepegawaian dan Pengembangan Sumber Daya Manusia.",
     data: {
       type: "pejabat",
       name: "Heru Kuncoro",
@@ -162,6 +190,8 @@ const ragDataToInsert = [
     },
   },
   {
+    content:
+      "Drs. Hendro Suwondo, M.Pd menjabat sebagai Staf Ahli Bidang Kemasyarakatan dan Sumber Daya Manusia.",
     data: {
       type: "pejabat",
       name: "Hendro Suwondo",
@@ -172,6 +202,8 @@ const ragDataToInsert = [
     },
   },
   {
+    content:
+      "Mashudi, S.Sos, M.Si menjabat sebagai Kepala Badan Kesatuan Bangsa dan Politik.",
     data: {
       type: "pejabat",
       name: "Mashudi",
@@ -182,6 +214,8 @@ const ragDataToInsert = [
     },
   },
   {
+    content:
+      "Puji Rahmawati, S.Sos., M.Si menjabat sebagai Staf Ahli Bidang Ekonomi Pembangunan Dan Keuangan.",
     data: {
       type: "pejabat",
       name: "Puji Rahmawati",
@@ -192,6 +226,8 @@ const ragDataToInsert = [
     },
   },
   {
+    content:
+      "Yohanes Cahyono, S.Sos., M.Si menjabat sebagai Staf Ahli Bidang Pemerintahan Hukum Dan Politik.",
     data: {
       type: "pejabat",
       name: "Yohanes Cahyono",
@@ -202,6 +238,7 @@ const ragDataToInsert = [
     },
   },
   {
+    content: "Achmad Romadhon, SH menjabat sebagai Asisten Administrasi Umum.",
     data: {
       type: "pejabat",
       name: "Achmad Romadhon",
@@ -212,6 +249,8 @@ const ragDataToInsert = [
     },
   },
   {
+    content:
+      "Muhamad Zahrowi, AP menjabat sebagai Kepala Dinas Lingkungan Hidup.",
     data: {
       type: "pejabat",
       name: "Muhamad Zahrowi",
@@ -222,6 +261,7 @@ const ragDataToInsert = [
     },
   },
   {
+    content: "Imam Nurwedi, S.Sos menjabat sebagai Kepala Dinas Tenaga Kerja.",
     data: {
       type: "pejabat",
       name: "Imam Nurwedi",
@@ -232,6 +272,8 @@ const ragDataToInsert = [
     },
   },
   {
+    content:
+      "Drs. Supriadi, S.Sos menjabat sebagai Kepala Dinas Pemberdayaan Masyarakat dan Desa.",
     data: {
       type: "pejabat",
       name: "Supriadi",
@@ -242,6 +284,8 @@ const ragDataToInsert = [
     },
   },
   {
+    content:
+      "Paryoto, SP menjabat sebagai Kepala Dinas Ketahanan Pangan dan Peternakan.",
     data: {
       type: "pejabat",
       name: "Paryoto",
@@ -252,6 +296,8 @@ const ragDataToInsert = [
     },
   },
   {
+    content:
+      "Ir. Gunawi menjabat sebagai Kepala Dinas Pekerjaan Umum dan Penataan Ruang.",
     data: {
       type: "pejabat",
       name: "Gunawi",
@@ -262,6 +308,8 @@ const ragDataToInsert = [
     },
   },
   {
+    content:
+      "Hari Pitojo, ST menjabat sebagai Kepala Dinas Perumahan dan Kawasan Permukiman.",
     data: {
       type: "pejabat",
       name: "Hari Pitojo",
@@ -272,6 +320,8 @@ const ragDataToInsert = [
     },
   },
   {
+    content:
+      "Sigit Budiarto, S.Sos, M.Si menjabat sebagai Kepala Dinas Kependudukan dan Pencatatan Sipil.",
     data: {
       type: "pejabat",
       name: "Sigit Budiarto",
@@ -282,6 +332,7 @@ const ragDataToInsert = [
     },
   },
   {
+    content: "Agung Tri Widodo, S.KM menjabat sebagai Kepala Dinas Kesehatan.",
     data: {
       type: "pejabat",
       name: "Agung Tri Widodo",
@@ -292,6 +343,8 @@ const ragDataToInsert = [
     },
   },
   {
+    content:
+      "Kus Hendrawan, SH, M.Si menjabat sebagai Kepala Dinas Perpustakaan dan Kearsipan.",
     data: {
       type: "pejabat",
       name: "Kus Hendrawan",
@@ -302,6 +355,8 @@ const ragDataToInsert = [
     },
   },
   {
+    content:
+      "Suntoko, S.Sos., M.Si menjabat sebagai Kepala Badan Pengelolaan Keuangan dan Aset Daerah.",
     data: {
       type: "pejabat",
       name: "Suntoko",
@@ -312,6 +367,8 @@ const ragDataToInsert = [
     },
   },
   {
+    content:
+      "Sumanto, SP., MMA menjabat sebagai Kepala Dinas Pertanian dan Perikanan.",
     data: {
       type: "pejabat",
       name: "Sumanto",
@@ -322,6 +379,7 @@ const ragDataToInsert = [
     },
   },
   {
+    content: "Drs. Agung Budiarto menjabat sebagai Plt. Kepala Dinas Sosisl.",
     data: {
       type: "pejabat",
       name: "Agung Budiarto",
@@ -332,6 +390,8 @@ const ragDataToInsert = [
     },
   },
   {
+    content:
+      "Boby Saktia Putra Lubis, ST menjabat sebagai Kepala Pelaksana Badan Penanggulangan Bencana.",
     data: {
       type: "pejabat",
       name: "Boby Saktia Putra Lubis",
@@ -342,6 +402,8 @@ const ragDataToInsert = [
     },
   },
   {
+    content:
+      "Junaidi, S.Sos, M.Si menjabat sebagai Kepala Bagian Administrasi Pembangunan.",
     data: {
       type: "pejabat",
       name: "Junaidi",
@@ -352,6 +414,7 @@ const ragDataToInsert = [
     },
   },
   {
+    content: "Alif Margianto, SH., M.Hum menjabat sebagai Kepala Bagian Hukum.",
     data: {
       type: "pejabat",
       name: "Alif Margianto",
@@ -362,6 +425,8 @@ const ragDataToInsert = [
     },
   },
   {
+    content:
+      "Mohammad Jazuli, SE menjabat sebagai Kepala Bagian Kesejahteraan Rakyat.",
     data: {
       type: "pejabat",
       name: "Mohammad Jazuli",
@@ -372,6 +437,8 @@ const ragDataToInsert = [
     },
   },
   {
+    content:
+      "Sri Diana Dewi Kusumaningrum, SH. M.Si menjabat sebagai Kepala Bagian Organisasi.",
     data: {
       type: "pejabat",
       name: "Sri Diana Dewi Kusumaningrum",
@@ -382,6 +449,8 @@ const ragDataToInsert = [
     },
   },
   {
+    content:
+      "R. Ndaru Kendaryanto, ST, MM menjabat sebagai Kepala Bagian Pemerintahan.",
     data: {
       type: "pejabat",
       name: "R. Ndaru Kendaryanto",
@@ -392,6 +461,8 @@ const ragDataToInsert = [
     },
   },
   {
+    content:
+      "A. Heru Sulaksono, ST., MM menjabat sebagai Kepala Bagian Pengadaan Barang/Jasa.",
     data: {
       type: "pejabat",
       name: "A. Heru Sulaksono",
@@ -402,6 +473,8 @@ const ragDataToInsert = [
     },
   },
   {
+    content:
+      "Puji Satriyo, SE., M.Si menjabat sebagai Kepala Bagian Perekonomian dan Sumber Daya Alam.",
     data: {
       type: "pejabat",
       name: "Puji Satriyo",
@@ -412,6 +485,8 @@ const ragDataToInsert = [
     },
   },
   {
+    content:
+      "Toni Eko Prasetyo, SE., M.Si menjabat sebagai Kepala Bagian Protokol dan Komunikasi Pimpinan.",
     data: {
       type: "pejabat",
       name: "Toni Eko Prasetyo",
@@ -422,6 +497,7 @@ const ragDataToInsert = [
     },
   },
   {
+    content: "Eryk Sanjaya, AP menjabat sebagai Kepala Bagian Umum.",
     data: {
       type: "pejabat",
       name: "Eryk Sanjaya",
@@ -432,6 +508,7 @@ const ragDataToInsert = [
     },
   },
   {
+    content: "Bibit Purwanto, S.Sos, M.Si menjabat sebagai Camat Mejayan.",
     data: {
       type: "pejabat",
       name: "Bibit Purwanto",
@@ -442,6 +519,7 @@ const ragDataToInsert = [
     },
   },
   {
+    content: "Tarji, S.STP, M.H menjabat sebagai Camat Dagangan.",
     data: {
       type: "pejabat",
       name: "Tarji",
@@ -452,6 +530,7 @@ const ragDataToInsert = [
     },
   },
   {
+    content: "Heri Kurniawan, S.STP, M.Si menjabat sebagai Camat Wonoasri.",
     data: {
       type: "pejabat",
       name: "Heri Kurniawan",
@@ -462,6 +541,7 @@ const ragDataToInsert = [
     },
   },
   {
+    content: "Tarnu Ashidiq, S.Ag., M.Si menjabat sebagai Camat Kebonsari.",
     data: {
       type: "pejabat",
       name: "Tarnu Ashidiq",
@@ -472,6 +552,7 @@ const ragDataToInsert = [
     },
   },
   {
+    content: "Hariono, S.Sos, M.Si menjabat sebagai Camat Madiun.",
     data: {
       type: "pejabat",
       name: "Hariono",
@@ -482,6 +563,7 @@ const ragDataToInsert = [
     },
   },
   {
+    content: "Hery Fajar Nugroho, S.Sos, M.Si menjabat sebagai Camat Dolopo.",
     data: {
       type: "pejabat",
       name: "Hery Fajar Nugroho",
@@ -492,6 +574,8 @@ const ragDataToInsert = [
     },
   },
   {
+    content:
+      "Basudewo Aji Pamungkas, SE.M.Si menjabat sebagai Camat Pilangkenceng.",
     data: {
       type: "pejabat",
       name: "Basudewo Aji Pamungkas",
@@ -502,6 +586,7 @@ const ragDataToInsert = [
     },
   },
   {
+    content: "Alviantoro, S.STP.M.H menjabat sebagai Camat Kare.",
     data: {
       type: "pejabat",
       name: "Alviantoro",
@@ -512,6 +597,7 @@ const ragDataToInsert = [
     },
   },
   {
+    content: "Muhammad Sholeh, S.Sos. M.si menjabat sebagai Camat Sawahan.",
     data: {
       type: "pejabat",
       name: "Muhammad Sholeh",
@@ -522,6 +608,7 @@ const ragDataToInsert = [
     },
   },
   {
+    content: "Drs. Eko Suwartono menjabat sebagai Camat Wungu.",
     data: {
       type: "pejabat",
       name: "Eko Suwartono",
@@ -532,6 +619,7 @@ const ragDataToInsert = [
     },
   },
   {
+    content: "Djoko Susilo, S.Sos menjabat sebagai Camat Gemarang.",
     data: {
       type: "pejabat",
       name: "Djoko Susilo",
@@ -542,6 +630,7 @@ const ragDataToInsert = [
     },
   },
   {
+    content: "Raswiyanto, SH menjabat sebagai Camat Jiwan.",
     data: {
       type: "pejabat",
       name: "Raswiyanto",
@@ -552,6 +641,7 @@ const ragDataToInsert = [
     },
   },
   {
+    content: "Aksin Muharom, S.Sos menjabat sebagai Camat Balerejo.",
     data: {
       type: "pejabat",
       name: "Aksin Muharom",
@@ -562,6 +652,7 @@ const ragDataToInsert = [
     },
   },
   {
+    content: "Dodi Setiawan, S.IP, MH menjabat sebagai Camat Saradan.",
     data: {
       type: "pejabat",
       name: "Dodi Setiawan",
@@ -572,6 +663,7 @@ const ragDataToInsert = [
     },
   },
   {
+    content: "Puguh Wijayanto, S.STP menjabat sebagai Camat Geger.",
     data: {
       type: "pejabat",
       name: "Puguh Wijayanto",
