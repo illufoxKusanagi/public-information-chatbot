@@ -75,8 +75,20 @@
 } */
 
 @layer components {
-  .title-regular {
-    @apply text-5xl font-bold;
+  .heading-1 {
+    @apply text-4xl font-bold;
+  }
+
+  .heading-2 {
+    @apply text-3xl font-bold;
+  }
+
+  .heading-3 {
+    @apply text-2xl font-bold;
+  }
+
+  .heading-4 {
+    @apply text-xl font-bold;
   }
 
   .body-bigger-regular {
