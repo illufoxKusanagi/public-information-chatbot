@@ -12,6 +12,11 @@ if (!connectionString) {
 const sql_db = postgres(connectionString);
 export const db = drizzle(sql_db, { schema });
 
+type RagInput = {
+  content: string;
+  data: object;
+};
+
 export async function insertRagData(
   data: schema.InsertRagData | schema.InsertRagData[]
 ) {

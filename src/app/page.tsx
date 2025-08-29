@@ -23,7 +23,7 @@ export default function Home() {
     setIsLoading(true);
     setDbStatus("");
     try {
-      const response = await fetch("/api/rag/data", {
+      const response = await fetch("/api/seed", {
         method: "POST",
       });
       const result = await response.json();

@@ -6,7 +6,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 type ChatInputProps = {
-  onSendMessage?: (message: string) => void;
+  onSendMessage: (message: string) => void;
   isLoading?: boolean;
 };
 
@@ -19,17 +19,18 @@ export default function ChatInput({
 
   const submitMessage = () => {
     if (!inputValue.trim() || isLoading) return;
-    if (onSendMessage) {
-      onSendMessage(inputValue);
-    } else {
-      // const newChatId = Date.now().toString();
-      // const newUserMessage: Message = { role: "user", content: inputValue };
-      // localStorage.setItem(
-      //   `chat-${newChatId}`,
-      //   JSON.stringify([newUserMessage])
-      // );
-      router.push(`/chat?message=${encodeURIComponent(inputValue)}`);
-    }
+    onSendMessage(inputValue);
+    // if (onSendMessage) {
+    //   onSendMessage(inputValue);
+    // } else {
+    //   // const newChatId = Date.now().toString();
+    //   // const newUserMessage: Message = { role: "user", content: inputValue };
+    //   // localStorage.setItem(
+    //   //   `chat-${newChatId}`,
+    //   //   JSON.stringify([newUserMessage])
+    //   // );
+    //   router.push(`/chat?message=${encodeURIComponent(inputValue)}`);
+    // }
     setInputValue("");
   };
 
@@ -69,6 +70,7 @@ export default function ChatInput({
       <Textarea
         onKeyDown={handleKeyDown}
         value={inputValue}
+        // onSubmit={handleSubmit}
         onChange={(e) => setInputValue(e.target.value)}
         placeholder="Tanyakan apapun tentang Kabupaten Madiun..."
         className="min-h-32 w-full resize-none rounded-xl p-5 pr-16 pb-20"

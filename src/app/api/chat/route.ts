@@ -11,11 +11,11 @@ if (!apiKey) {
 const genAI = new GoogleGenerativeAI(apiKey);
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  console.log("API /api/chat POST called"); // Add this
   const { message } = await request.json();
   const userMessage = message.content;
   try {
     const contextData = await findRelevantContents(userMessage);
-    // console.log("Context Data:", contextData);
     const context =
       contextData.length > 0
         ? `
@@ -47,6 +47,7 @@ PERATURAN PENTING:
     return NextResponse.json({
       role: "model",
       content: text,
+      context: contextData,
     });
   } catch (error) {
     return NextResponse.json(

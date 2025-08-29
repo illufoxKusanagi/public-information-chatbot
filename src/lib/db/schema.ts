@@ -20,9 +20,9 @@ export const users = pgTable("users", {
 
 export const ragData = pgTable("rag_data", {
   id: serial("id").primaryKey(),
-  content: text("content"),
+  content: text("content").notNull(),
   data: jsonb("data").notNull(),
-  embedding: vector("embedding", { dimensions: 768 }),
+  embedding: vector("embedding", { dimensions: 768 }).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
