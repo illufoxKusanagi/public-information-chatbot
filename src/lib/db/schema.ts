@@ -28,7 +28,7 @@ export const ragData = pgTable("rag_data", {
 
 export const chatHistory = pgTable("chat_history", {
   id: serial("id").primaryKey(),
-  userId: serial("user_id").references(() => users.id),
+  userId: integer("user_id").references(() => users.id),
   title: text("title").notNull(),
   messages: jsonb("messages"),
   createdAt: timestamp("created_at").defaultNow(),

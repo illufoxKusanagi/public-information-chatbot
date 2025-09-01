@@ -40,7 +40,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-.env
+# trunk code quality 
+/.trunk
+
+
 .env.local
 .env.production
 folder-structure.md

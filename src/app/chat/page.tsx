@@ -12,6 +12,7 @@ import { useChat } from "@/hooks/use-chat";
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import rehypeHighlight from "rehype-highlight";
+import { useSearchParams } from "next/navigation";
 
 function TextBubble({
   role,
@@ -34,7 +35,6 @@ function TextBubble({
           isThinking && "animate-pulse"
         )}
       >
-        {/* <p className="body-medium-regular">{content}</p> */}
         <section className="prose prose-sm dark:prose-invert max-w-none">
           <ReactMarkdown
             rehypePlugins={[rehypeRaw, rehypeHighlight]}
@@ -109,17 +109,21 @@ function ChatHistory({
 
 export default function ChatPage() {
   const { messages, isLoading, handleSendMessage } = useChat();
+  const searchParams = useSearchParams();
+  const chatId = searchParams.get("id");
+  const headerTitle = chatId ? `Chat #${chatId}` : "Chat baru";
+
   return (
     <div className="flex flex-col h-screen relative overflow-hidden">
       <div className="absolute top-4 right-4 z-10">
         <ModeToggle />
       </div>
       <SidebarProvider defaultOpen={true}>
-        <div className="flex flex-row w-full">
+        <div className="flex flex-row w-full ">
           <AppSidebar />
           <main className="flex flex-col w-full relative">
             <div className="flex bg-secondary min-h-16 w-full items-center justify-center">
-              <p className="body-medium-bold">Chat baru</p>
+              <p className="body-medium-bold">{headerTitle}</p>
             </div>
             <ScrollArea className="flex-1 overflow-y-auto">
               <Suspense fallback={<div>Loading chat...</div>}>

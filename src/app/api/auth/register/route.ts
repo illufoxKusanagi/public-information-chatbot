@@ -17,7 +17,10 @@ export async function POST(request: NextRequest) {
     const validation = registerSchema.safeParse(body);
     if (!validation.success) {
       return NextResponse.json(
-        { error: "Invalid input. ", details: z.flattenError(validation.error) },
+        {
+          error: "Input tidak valid. ",
+          details: z.flattenError(validation.error),
+        },
         { status: 400 }
       );
     }
