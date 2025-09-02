@@ -17,7 +17,6 @@ import {
 import { cn } from "@/lib/utils";
 import { NavUser } from "./nav-user";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -35,30 +34,7 @@ const data = {
     avatar: "/avatars/shadcn.jpg",
   },
 };
-
-// interface ChatHistoryItem {
-//   id: string;
-//   title: string;
-// }
-
-const items = [
-  {
-    title: "Chat 1",
-    url: "#",
-  },
-  {
-    title: "Chat 2",
-    url: "#",
-  },
-  {
-    title: "Chat 3",
-    url: "#",
-  },
-];
-
 export function AppSidebar() {
-  const pathname = usePathname();
-  const router = useRouter();
   const { open } = useSidebar();
   const [history, setHistory] = useState<ChatHistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -79,93 +55,99 @@ export function AppSidebar() {
     };
     fetchHistory();
   }, []);
-
-  const handleNewChat = async () => {
-    try {
-      const response = await fetch("/api/chat/history", { method: "POST" });
-      if (!response.ok) throw new Error("Failet to create new chat");
-      const newChat = await response.json();
-      router.push(`/chat/${newChat.id}`);
-    } catch (error) {
-      toast.error("Could not create a new chat session");
-    }
-  };
-
-  // useEffect(() => {
-  //   const keys = Object.keys(localStorage).filter((key) =>
-  //     key.startsWith("chat_")
-  //   );
-  //   const history = keys
-  //     .map((key) => {
-  //       const messages = JSON.parse(localStorage.getItem(key) || "[]");
-  //       return {
-  //         id: key.replace("chat_", ""),
-  //         title: messages[0]?.content.substring(0, 25) + "..." || "New Chat",
-  //       };
-  //     })
-  //     .sort((a, b) => parseInt(b.id) - parseInt(a.id));
-  //   setChatHistory(history);
-  // }, [pathname]);
-
   return (
     <Sidebar variant="sidebar" collapsible="icon">
       <SidebarHeader
         className={cn(
-          "overflow-hidden text-ellipsis whitespace-nowrap transition-all duration-500 ease-in-out",
-          open ? "block max-h-12 opacity-100" : "max-h-0 opacity-0 hidden"
+          "overflow-hidden transition-all duration-300 ease-in-out",
+          open ? "px-4 pt-4 pb-2 block opacity-100" : "p-0 opacity-0 hidden"
         )}
       >
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild>
+            <SidebarMenuButton asChild className="hover:bg-accent/50 h-16">
               <Link href="/">
-                <h1 className="text-lg font-bold">Portal Informasi Publik</h1>
+                <h1 className="body-big-bold text-primary text-center">
+                  Portal Informasi Publik
+                </h1>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
-      <SidebarContent>
+
+      <SidebarContent
+        className={cn(
+          "flex flex-col gap-4 transition-all duration-300",
+          open ? "px-4 py-2" : "p-2"
+        )}
+      >
         <SidebarMenu>
-          {/* NEW CHAT BUTTON */}
           <SidebarMenuButton
-            // onClick={handleNewChat}
-            variant={"block"}
-            className="py-4"
+            variant="block"
+            className="h-10 px-4 py-3 justify-start gap-3 transition-colors"
             asChild
           >
             <Link href="/">
-              <Plus size="icon" />
-              {open && <span>Percakapan Baru</span>}
+              <Plus size="icon" className="shrink-0" />
+              {open && (
+                <span className="body-medium-bold">Percakapan Baru</span>
+              )}
             </Link>
           </SidebarMenuButton>
-          <SidebarGroup>
-            <SidebarGroupLabel>History</SidebarGroupLabel>
-            <SidebarGroupContent>
+
+          <SidebarGroup className="mt-2">
+            <SidebarGroupLabel className="px-2 py-2">
+              <span className="body-small-bold text-muted-foreground uppercase ">
+                History
+              </span>
+            </SidebarGroupLabel>
+            <SidebarGroupContent className="space-y-1">
               {isLoading ? (
-                <p className="p-2 body-small-regular text-muted-foreground">
-                  Loading...
-                </p>
+                <div className="py-4 text-center">
+                  {" "}
+                  <p className="text-sm text-muted-foreground">
+                    Loading...
+                  </p>{" "}
+                </div>
               ) : history.length > 0 ? (
                 history.map((chat) => (
                   <SidebarMenuItem key={chat.id}>
                     <Link href={`/chat/${chat.id}`}>
-                      <SidebarMenuButton className="w-full">
-                        {chat.title}
+                      <SidebarMenuButton
+                        className={cn(
+                          "transition-colors",
+                          open
+                            ? "w-full h-10 px-3 py-2 justify-start text-left hover:bg-accent/50 rounded-md"
+                            : "h-10 w-10 p-0 justify-center hover:bg-accent/50 rounded-md mx-auto"
+                        )}
+                      >
+                        <span className="truncate body-medium-regular">
+                          {chat.title}
+                        </span>
                       </SidebarMenuButton>
                     </Link>
                   </SidebarMenuItem>
                 ))
               ) : (
-                <p className="p-2 body-small-regular text-muted-foreground">
-                  No chat history
-                </p>
+                <div className="py-6 text-center">
+                  {" "}
+                  <p className="body-small-regular text-muted-foreground">
+                    {" "}
+                    No chat history
+                  </p>
+                </div>
               )}
             </SidebarGroupContent>
           </SidebarGroup>
         </SidebarMenu>
       </SidebarContent>
-      <SidebarFooter className="absolute bottom-0 w-full">
+      <SidebarFooter
+        className={cn(
+          "absolute bottom-0 w-full border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
+          open ? "p-3" : "p-2"
+        )}
+      >
         <NavUser user={data.user} />
       </SidebarFooter>
     </Sidebar>

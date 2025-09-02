@@ -1,8 +1,8 @@
 "use client";
 
 import { AppSidebar } from "@/components/ui/app-sidebar";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { Suspense } from "react";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { Suspense, useEffect, useState } from "react";
 import { ModeToggle } from "@/components/ui/dark-mode-toggle";
 import { cn } from "@/lib/utils";
 import ChatInput from "@/components/chat/chat-input";
@@ -13,6 +13,9 @@ import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import rehypeHighlight from "rehype-highlight";
 import { useSearchParams } from "next/navigation";
+import ModeToggleButton from "@/components/ui/mode-toggle";
+import HelpButton from "@/components/ui/help-button";
+import { getChatHistoryTitle } from "@/lib/services/ai/rag.service";
 
 function TextBubble({
   role,
@@ -110,20 +113,62 @@ function ChatHistory({
 export default function ChatPage() {
   const { messages, isLoading, handleSendMessage } = useChat();
   const searchParams = useSearchParams();
-  const chatId = searchParams.get("id");
-  const headerTitle = chatId ? `Chat #${chatId}` : "Chat baru";
+  const chatId: number = Number(searchParams.get("id"));
+  const [chatTitle, setChatTitle] = useState<string>("");
+  const [titleLoading, setTitleLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // ✅ Updated to use API route instead of direct database call
+  useEffect(() => {
+    const fetchTitle = async () => {
+      if (chatId && !isNaN(chatId)) {
+        setTitleLoading(true);
+        setError(null);
+        try {
+          const response = await fetch(`/api/chat/title/${chatId}`);
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          const data = await response.json();
+          if (data.error) {
+            throw new Error(data.error);
+          }
+          setChatTitle(data.title || `Chat #${chatId}`);
+        } catch (error) {
+          console.error("Failed to fetch chat title:", error);
+          setChatTitle(`Chat #${chatId}`);
+          setError(error instanceof Error ? error.message : "Unknown error");
+        } finally {
+          setTitleLoading(false);
+        }
+      } else {
+        setChatTitle("New Chat");
+        setTitleLoading(false);
+      }
+    };
+
+    fetchTitle();
+  }, [chatId]);
 
   return (
     <div className="flex flex-col h-screen relative overflow-hidden">
-      <div className="absolute top-4 right-4 z-10">
-        <ModeToggle />
+      <div className="flex absolute gap-4 top-4 right-4 z-10">
+        <ModeToggleButton />
+        <HelpButton />
       </div>
       <SidebarProvider defaultOpen={true}>
         <div className="flex flex-row w-full ">
           <AppSidebar />
           <main className="flex flex-col w-full relative">
             <div className="flex bg-secondary min-h-16 w-full items-center justify-center">
-              <p className="body-medium-bold">{headerTitle}</p>
+              <SidebarTrigger className="ml-4 absolute left-0 justify-center" />
+              <p className="body-medium-bold">
+                {titleLoading
+                  ? "Memuat judul..."
+                  : error
+                  ? "New Chat"
+                  : chatTitle}
+              </p>
             </div>
             <ScrollArea className="flex-1 overflow-y-auto">
               <Suspense fallback={<div>Loading chat...</div>}>
@@ -137,7 +182,6 @@ export default function ChatPage() {
                 isLoading={isLoading}
               />
             </div>
-            {/* <ChatPageContent /> */}
             <footer className="flex flex-col h-6 w-full justify-center items-center">
               <p className="body-small-regular">
                 Made with 💗 by Illufox Kasunagi

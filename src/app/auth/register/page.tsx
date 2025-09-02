@@ -34,7 +34,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-// Zod schema for form validation
 const schema = z.object({
   username: z
     .string()
@@ -42,7 +41,6 @@ const schema = z.object({
     .max(20, "Username maksimal 20 karakter"),
   email: z.string().email("Alamat email tidak valid"),
   password: z.string().min(8, "Password minimal 8 karakter"),
-  // Use nativeEnum for enums in Zod
   role: z.enum(UserRole),
 });
 
@@ -71,7 +69,6 @@ export default function RegisterPage() {
       const result = await response.json();
 
       if (!response.ok) {
-        // If the server says the email exists, show an error on the form
         if (response.status === 409) {
           form.setError("email", {
             type: "manual",
@@ -80,11 +77,9 @@ export default function RegisterPage() {
         }
         throw new Error(result.error || "Gagal mendaftar.");
       }
-
       toast.success(
         "Akun berhasil dibuat! Anda akan dialihkan ke halaman login."
       );
-      // Redirect to login page after a short delay
       setTimeout(() => {
         router.push("/auth/login");
       }, 2000);

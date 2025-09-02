@@ -6,7 +6,8 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
-const apiKey = process.env.GEMINI_API_KEY;
+const apiKey: string = process.env.GEMINI_API_KEY!;
+const generativeModel: string = process.env.GENERATIVE_MODEL!;
 
 if (!apiKey) {
   throw new Error(
@@ -50,7 +51,7 @@ PERATURAN PENTING:
 
     const augmentedPrompt = `${systemPrompt} ${context}\nPERTANYAAN PENGGUNA: "${userMessage}"\nJAWABAN ANDA:`;
 
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const model = genAI.getGenerativeModel({ model: generativeModel });
     const result = await model.generateContent(augmentedPrompt);
     const text = result.response.text();
 
@@ -65,7 +66,7 @@ PERATURAN PENTING:
         .values({
           userId: userId,
           title: title,
-          messages: [userMsg, botMsg], // Store both messages as JSON array
+          messages: [userMsg, botMsg],
         })
         .returning({ id: chatHistory.id });
 

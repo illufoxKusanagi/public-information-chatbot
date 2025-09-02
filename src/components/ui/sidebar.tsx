@@ -280,34 +280,22 @@ function SidebarTrigger({
       onMouseLeave={() => setIsHovered(false)}
       {...props}
     >
-      {/* {" "}
-      {!isHovered ? (
-        <PanelLeftIcon />
-      ) : open ? (
-        <ArrowLeftFromLineIcon />
-      ) : (
-        <ArrowRightFromLine />
-      )} */}
-      {/* Ikon Default (saat tidak di-hover) */}
       <PanelLeftIcon
         className={cn(
-          "absolute transition-all duration-200 ease-in-out w-4 h-4",
+          "absolute transition-all duration-200 ease-in-out w-6 h-6",
           isHovered ? "opacity-0 scale-75 rotate-45" : "opacity-100 scale-100"
         )}
       />
 
-      {/* Ikon untuk state 'expanded' (saat di-hover) */}
       <ArrowLeftFromLineIcon
         className={cn(
-          "absolute transition-all duration-200 ease-in-out w-4 h-4",
+          "absolute transition-all duration-200 ease-in-out w-6 h-6",
           isHovered && open ? "opacity-100 scale-100" : "opacity-0 scale-75"
         )}
       />
-
-      {/* Ikon untuk state 'collapsed' (saat di-hover) */}
       <ArrowRightFromLine
         className={cn(
-          "absolute transition-all duration-200 ease-in-out w-4 h-4",
+          "absolute transition-all duration-200 ease-in-out w-6 h-6",
           isHovered && !open ? "opacity-100 scale-100" : "opacity-0 scale-75"
         )}
       />
@@ -424,7 +412,7 @@ function SidebarGroup({ className, ...props }: React.ComponentProps<"div">) {
       data-slot="sidebar-group"
       data-sidebar="group"
       className={cn(
-        "relative flex w-full min-w-0 flex-col px-2 pt-0",
+        "relative flex w-full min-w-0 flex-col px-0 pt-0",
         className
       )}
       {...props}
