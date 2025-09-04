@@ -41,7 +41,7 @@ const schema = z.object({
     .max(20, "Username maksimal 20 karakter"),
   email: z.string().email("Alamat email tidak valid"),
   password: z.string().min(8, "Password minimal 8 karakter"),
-  role: z.enum(UserRole),
+  role: z.number(),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -54,7 +54,7 @@ export default function RegisterPage() {
       username: "",
       email: "",
       password: "",
-      role: UserRole.User,
+      // role: UserRole[1],
     },
   });
 

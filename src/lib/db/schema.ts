@@ -6,10 +6,11 @@ import {
   timestamp,
   integer,
   vector,
+  uuid,
 } from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
+  id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull().unique(),
   email: text("email").notNull().unique(),
   avatar: text("avatar"),
@@ -19,7 +20,7 @@ export const users = pgTable("users", {
 });
 
 export const ragData = pgTable("rag_data", {
-  id: serial("id").primaryKey(),
+  id: uuid("id").primaryKey().defaultRandom(),
   content: text("content").notNull(),
   data: jsonb("data").notNull(),
   embedding: vector("embedding", { dimensions: 768 }).notNull(),
@@ -28,7 +29,7 @@ export const ragData = pgTable("rag_data", {
 
 export const chatHistory = pgTable("chat_history", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id),
+  userId: uuid("user_id").references(() => users.id),
   title: text("title").notNull(),
   messages: jsonb("messages"),
   createdAt: timestamp("created_at").defaultNow(),

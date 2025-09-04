@@ -1,9 +1,10 @@
-// Lokasi: app/api/chat/[chatId]/route.ts
-
 import { db } from "@/lib/db/index";
 import { chatHistory } from "@/lib/db/schema";
-import { Message } from "@/lib/types/chat";
-import { eq } from "drizzle-orm";
+import {
+  getAuthCookie,
+  getUserFromToken,
+} from "@/lib/services/auth/auth.service";
+import { eq, and } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 interface RouteParams {
@@ -13,35 +14,87 @@ interface RouteParams {
 }
 
 export async function GET(request: NextRequest, { params }: RouteParams) {
-  const { chatId } = await params;
-  const userId = 1; // Ganti dengan logika autentikasi Anda
-
-  if (!chatId) {
-    return NextResponse.json({ error: "Chat ID is required" }, { status: 400 });
-  }
-
   try {
-    const history = await db.query.chatHistory.findFirst({
-      where: eq(chatHistory.id, parseInt(chatId)),
-      // Anda bisa menambahkan validasi userId di sini untuk keamanan
-      // where: and(eq(chatHistory.id, parseInt(chatId)), eq(chatHistory.userId, userId)),
+    // Edited Here: Get authenticated user instead of hardcoding userId = 1
+    const token = getAuthCookie();
+
+    if (!token) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const user = await getUserFromToken(token);
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const chatId = parseInt(params.chatId);
+
+    if (isNaN(chatId)) {
+      return NextResponse.json({ error: "Invalid chat ID" }, { status: 400 });
+    }
+
+    // Edited Here: Query with both chatId AND userId to ensure user can only access their own chats
+    const chat = await db.query.chatHistory.findFirst({
+      where: and(eq(chatHistory.id, chatId), eq(chatHistory.userId, user.id)),
     });
 
-    if (!history) {
-      return NextResponse.json({ error: "Chat not found" }, { status: 404 });
+    if (!chat) {
+      return NextResponse.json(
+        { error: "Chat not found or access denied" },
+        { status: 404 }
+      );
     }
-    const message = (history.messages as Message[]) || [];
-    return NextResponse.json({
-      id: history.id,
-      title: history.title,
-      messages: message,
-      createdAt: history.createdAt,
-      userId: history.userId,
-    });
+
+    return NextResponse.json(chat);
   } catch (error) {
-    console.error("Failed to fetch chat history:", error);
+    console.error("Error fetching chat:", error);
     return NextResponse.json(
-      { error: "Failed to fetch chat history" },
+      { error: "Failed to fetch chat" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest, { params }: RouteParams) {
+  try {
+    // Edited Here: Get authenticated user for deletion
+    const token = getAuthCookie();
+
+    if (!token) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const user = await getUserFromToken(token);
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const chatId = parseInt(params.chatId);
+
+    if (isNaN(chatId)) {
+      return NextResponse.json({ error: "Invalid chat ID" }, { status: 400 });
+    }
+
+    // Edited Here: Delete with user verification
+    const deletedChat = await db
+      .delete(chatHistory)
+      .where(and(eq(chatHistory.id, chatId), eq(chatHistory.userId, user.id)))
+      .returning();
+
+    if (deletedChat.length === 0) {
+      return NextResponse.json(
+        { error: "Chat not found or access denied" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ message: "Chat deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting chat:", error);
+    return NextResponse.json(
+      { error: "Failed to delete chat" },
       { status: 500 }
     );
   }

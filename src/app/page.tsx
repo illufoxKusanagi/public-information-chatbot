@@ -7,15 +7,27 @@ import { useState } from "react";
 import Link from "next/link";
 import HelpButton from "@/components/ui/help-button";
 import ModeToggleButton from "@/components/ui/mode-toggle";
+import { useAuth } from "./context/auth-context";
+import { Button } from "@/components/ui/button";
 
 export default function Home() {
   // const isOpen: boolean = true; // This can be controlled by state or props if needed
   const [isOpen, setIsOpen] = useState(true);
+  const { isAuthenticated, user, isLoading } = useAuth();
   return (
     <div className="flex flex-col h-screen relative">
       <div className="flex gap-4 absolute top-4 right-4">
         <ModeToggleButton />
         <HelpButton />
+        {!isAuthenticated ? (
+          <Link href={"/auth/login"}>
+            <Button>Login</Button>
+          </Link>
+        ) : (
+          <div className="flex items-center">
+            <p className="body-medium-regular">Halo, {user?.name}</p>
+          </div>
+        )}
       </div>
       <SidebarProvider defaultOpen={true}>
         <div className="flex flex-row h-full w-full">
