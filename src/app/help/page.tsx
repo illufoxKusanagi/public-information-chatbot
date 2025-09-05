@@ -15,7 +15,7 @@ export default function HelpPage() {
         <p className="body-medium-regular">
           Jika anda memiliki masalah lain, anda dapat menghubungi{" "}
           <span className="body-medium-bold hover:underline">
-            <Link href={"mailto: ariefsatria2409@gmail.com"} target="_blank">
+            <Link href={"mailto:ariefsatria2409@gmail.com"} target="_blank">
               email kami
             </Link>
           </span>

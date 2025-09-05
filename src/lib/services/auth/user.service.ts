@@ -23,10 +23,10 @@ export async function findUserById(id: string) {
 
 export async function findUserByEmail(email: string) {
   try {
-    const user = db.query.users.findFirst({
+    const user = await db.query.users.findFirst({
       where: eq(users.email, email),
     });
-    return user;
+    return user ?? null;
   } catch (error) {
     console.error("Error finding user by email:", error);
     return null;

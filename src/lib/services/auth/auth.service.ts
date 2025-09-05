@@ -17,13 +17,22 @@ type LoginPayload = {
 };
 
 // Edited Here: Fixed type to match your database schema (id is string/uuid, not serial)
-type RegisterPayload = Omit<InsertUser, "id" | "createdAt"> & {
-  password?: string;
+// type RegisterPayload = Omit<InsertUser, "id" | "createdAt"> & {
+//   password?: string;
+// };
+type RegisterPayload = Omit<
+  InsertUser,
+  "id" | "createdAt" | "password" | "role"
+> & {
+  password: string;
 };
 
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
+const JWT_SECRET = process.env.JWT_SECRET!;
 // Edited Here: Fixed TOKEN_EXPIRY to have a default value since your env might be undefined
-const TOKEN_EXPIRY = process.env.TOKEN_EXPIRY || "3h";
+if (!JWT_SECRET && process.env.NODE_ENV === "production") {
+  throw new Error("JWT_SECRET must be set in production");
+}
+const TOKEN_EXPIRY = process.env.TOKEN_EXPIRY ?? "3h";
 
 export function generateToken(userId: string): string {
   return jwt.sign({ sub: userId }, JWT_SECRET, { expiresIn: TOKEN_EXPIRY });
@@ -57,6 +66,7 @@ export function setAuthCookie(token: string) {
     httpOnly: true,
     path: "/",
     secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
     maxAge: 60 * 60 * 3,
   });
 }
@@ -70,7 +80,8 @@ export function clearAuthCookie() {
 }
 
 export async function registerUser(userData: RegisterPayload) {
-  const { name, email, password, role } = userData;
+  // const { name, email, password, role } = userData;
+  const { name, email, password } = userData;
 
   const existingUser = await findUserByEmail(email);
   if (existingUser) {
@@ -86,9 +97,9 @@ export async function registerUser(userData: RegisterPayload) {
     .insert(users)
     .values({
       name,
-      email,
+      email: email.toLowerCase(),
       password: hashedPassword,
-      role,
+      role: 2,
     })
     .returning({
       id: users.id,

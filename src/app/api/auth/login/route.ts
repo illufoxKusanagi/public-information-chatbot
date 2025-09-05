@@ -1,11 +1,12 @@
-import { z } from "zod";
+// import { z } from "zod";
+import { loginSchema } from "@/lib/validations/auth";
 import { NextRequest, NextResponse } from "next/server";
-import { loginUser } from "@/lib/services/auth/auth.service";
+import { loginUser, AuthError } from "@/lib/services/auth/auth.service";
 
-const loginSchema = z.object({
-  identifier: z.string().min(1, "Masukkan email atau username"),
-  password: z.string().min(1, "Masukkan password"),
-});
+// const loginSchema = z.object({
+//   identifier: z.string().min(1, "Masukkan email atau username"),
+//   password: z.string().min(1, "Masukkan password"),
+// });
 
 export async function POST(request: NextRequest) {
   try {
@@ -29,14 +30,8 @@ export async function POST(request: NextRequest) {
       user: user,
     });
   } catch (error) {
-    if (error instanceof Error) {
-      return NextResponse.json(
-        {
-          // Edited Here: Use 'error' field instead of 'message' for consistency
-          error: error.message,
-        },
-        { status: 401 }
-      );
+    if (error instanceof AuthError) {
+      return NextResponse.json({ error: error.message }, { status: 401 });
     } else {
       return NextResponse.json(
         {

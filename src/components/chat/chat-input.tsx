@@ -70,10 +70,11 @@ export default function ChatInput({
       <Textarea
         onKeyDown={handleKeyDown}
         value={inputValue}
-        // onSubmit={handleSubmit}
         onChange={(e) => setInputValue(e.target.value)}
         placeholder="Tanyakan apapun tentang Kabupaten Madiun..."
         className="min-h-32 w-full resize-none rounded-xl p-5 pr-16 pb-20"
+        disabled={isLoading}
+        aria-disabled={isLoading}
       />
     </form>
   );

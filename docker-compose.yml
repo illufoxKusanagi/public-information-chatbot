@@ -34,7 +34,10 @@ services:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "postgres"]
+      # test: ["CMD", "pg_isready", "-U", "postgres"]
+      test:
+        - CMD-SHELL
+        - 'pg_isready -h 127.0.0.1 -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"'
       interval: 10s
       timeout: 5s
       retries: 5

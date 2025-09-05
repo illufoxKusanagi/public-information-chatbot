@@ -58,21 +58,27 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
+    // CSRF guard: allow only same-origin requests
+    const origin = request.headers.get("origin");
+    if (origin) {
+      const reqHost = request.nextUrl.host;
+      const originHost = new URL(origin).host;
+      if (originHost !== reqHost) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    }
     // Edited Here: Get authenticated user for deletion
     const token = getAuthCookie();
-
     if (!token) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const user = await getUserFromToken(token);
-
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const chatId = parseInt(params.chatId);
-
     if (isNaN(chatId)) {
       return NextResponse.json({ error: "Invalid chat ID" }, { status: 400 });
     }

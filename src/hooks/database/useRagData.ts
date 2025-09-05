@@ -1,3 +1,5 @@
+/// UNUSED YET
+
 "use client";
 
 import { RagService } from "@/lib/services/ai/rag.service";

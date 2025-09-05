@@ -10,7 +10,7 @@ export interface ChatState {
 
 export interface ChatResponse {
   reply: string;
-  status: string;
+  status?: string;
 }
 
 export interface ChatError {

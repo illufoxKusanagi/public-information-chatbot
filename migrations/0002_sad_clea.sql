@@ -1,1 +1,0 @@
-ALTER TABLE "rag_data" ALTER COLUMN "content" DROP NOT NULL;

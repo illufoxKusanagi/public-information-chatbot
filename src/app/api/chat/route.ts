@@ -10,10 +10,12 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
-const apiKey: string = process.env.GEMINI_API_KEY!;
-const generativeModel: string = process.env.GENERATIVE_MODEL!;
+const apiKey: string = process.env.GEMINI_API_KEY || "";
+const generativeModel: string =
+  process.env.GENERATIVE_MODEL || "gemini-1.5-flash";
 
 if (!apiKey) {
+  console.error("Missing GEMINI_API_KEY");
   throw new Error(
     "Tidak dapat memproses respon chatbot, silahkan hubungi admin."
   );
@@ -23,20 +25,39 @@ const genAI = new GoogleGenerativeAI(apiKey);
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
-    const { message, chatId: existingChatId } = await request.json();
-    const userMessage = message.content;
+    // const { message, chatId: existingChatId } = await request.json();
+    // const userMessage = message.content;
+    const body = await request.json();
+    const rawMessage = body?.message;
+    const existingChatId = body?.chatId;
+    const userMessage =
+      typeof rawMessage === "string"
+        ? rawMessage.trim()
+        : typeof rawMessage?.content === "string"
+        ? rawMessage.content.trim()
+        : "";
+
+    if (!userMessage) {
+      return NextResponse.json(
+        { error: "Invalid 'message' payload" },
+        { status: 400 }
+      );
+    }
     let currentChatId = existingChatId;
     let newChatCreated = false;
 
     // Edited Here: Get authenticated user instead of hardcoding userId = 1
     const token = getAuthCookie();
-    let user = null;
+    // let user = null;
+    // let userId: string | null = null;
+    let user: Awaited<ReturnType<typeof getUserFromToken>> | null = null;
     let userId: string | null = null;
 
     if (token) {
       user = await getUserFromToken(token);
       if (user) {
-        userId = user.id;
+        // userId = user.id;
+        userId = String(user.id);
       }
     }
 
@@ -105,10 +126,19 @@ PERATURAN PENTING:
     } else if (userId && currentChatId) {
       // Update existing chat for authenticated user
       try {
+        //         const existingChat = await db.query.chatHistory.findFirst({
+        //   where: eq(chatHistory.id, parseInt(currentChatId)),
+        // });
+        const chatIdNum = Number(currentChatId);
+        if (!Number.isFinite(chatIdNum)) {
+          return NextResponse.json(
+            { error: "Invalid chatId" },
+            { status: 400 }
+          );
+        }
         const existingChat = await db.query.chatHistory.findFirst({
-          where: eq(chatHistory.id, parseInt(currentChatId)),
+          where: eq(chatHistory.id, chatIdNum),
         });
-
         if (existingChat) {
           // Edited Here: Verify the chat belongs to the authenticated user
           if (existingChat.userId === userId) {
@@ -143,12 +173,20 @@ PERATURAN PENTING:
       }
     }
 
-    return NextResponse.json({
-      role: "model",
-      content: text,
-      context: contextData,
-      chatId: newChatCreated ? currentChatId : undefined,
-    });
+    // return NextResponse.json({
+    // role: "model",
+    // content: text,
+    // context: contextData,
+    // chatId: newChatCreated ? currentChatId : undefined,
+    // });
+    return NextResponse.json(
+      {
+        role: "bot",
+        content: text,
+        chatId: newChatCreated ? currentChatId : undefined,
+      },
+      { headers: { "Cache-Control": "no-store, no-cache, must-revalidate" } }
+    );
   } catch (error) {
     console.error("Error in /api/chat:", error);
     return NextResponse.json(

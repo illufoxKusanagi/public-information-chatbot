@@ -11,7 +11,6 @@ import { useAuth } from "./context/auth-context";
 import { Button } from "@/components/ui/button";
 
 export default function Home() {
-  // const isOpen: boolean = true; // This can be controlled by state or props if needed
   const [isOpen, setIsOpen] = useState(true);
   const { isAuthenticated, user, isLoading } = useAuth();
   return (
@@ -42,7 +41,11 @@ export default function Home() {
         <p className="body-small-regular">
           Made with 💗 by{" "}
           <span className="hover:underline">
-            <Link href={"https://github.com/illufoxKusanagi"} target="_blank">
+            <Link
+              href={"https://github.com/illufoxKusanagi"}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               Illufox Kasunagi
             </Link>
           </span>

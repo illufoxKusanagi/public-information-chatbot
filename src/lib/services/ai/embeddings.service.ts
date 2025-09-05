@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const apiKey: string = process.env.GEMINI_API_KEY!;
-const embeddingModel: string = process.env.EMBEDDING_MODEL!;
+const apiKey = process.env.GEMINI_API_KEY;
+const embeddingModel = process.env.EMBEDDING_MODEL ?? "text-embedding-004";
 if (!apiKey) {
   throw new Error("GEMINI_API_KEY is not defined in environment variables.");
 }

@@ -15,7 +15,7 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   avatar: text("avatar"),
   role: integer("role").default(2),
-  password: text("password"),
+  password: text("password").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -29,7 +29,7 @@ export const ragData = pgTable("rag_data", {
 
 export const chatHistory = pgTable("chat_history", {
   id: serial("id").primaryKey(),
-  userId: uuid("user_id").references(() => users.id),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }),
   title: text("title").notNull(),
   messages: jsonb("messages"),
   createdAt: timestamp("created_at").defaultNow(),

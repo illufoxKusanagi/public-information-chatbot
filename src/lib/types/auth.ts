@@ -6,8 +6,8 @@ export interface User {
   email: string;
   name: string;
   role?: UserRole;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface LoginCredentials {
@@ -24,7 +24,7 @@ export interface RegisterCredentials {
 
 export interface AuthResponse {
   user: User;
-  token: string;
+  token?: string;
 }
 
 export interface AuthError {

@@ -1,4 +1,3 @@
-import { UserRole } from "@/lib/definitions";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { registerUser } from "@/lib/services/auth/auth.service";
@@ -8,7 +7,6 @@ const registerSchema = z.object({
   username: z.string().min(4).max(20),
   email: z.string().email(),
   password: z.string().min(8),
-  role: z.number(),
 });
 
 export async function POST(request: NextRequest) {
@@ -26,13 +24,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { username, email, password, role } = validation.data;
+    const { username, email, password } = validation.data;
 
     const newUser = await registerUser({
       name: username,
       email,
       password,
-      role,
     });
 
     return NextResponse.json(
