@@ -3,13 +3,25 @@ import jwt from "jsonwebtoken";
 import { authConfig } from "./config";
 import { User } from "../types/auth";
 
-if (
-  process.env.NODE_ENV === "production" &&
-  (!authConfig.JWT_SECRET || authConfig.JWT_SECRET === "your-secret-key")
-) {
-  throw new Error("JWT secret is misconfigured for production.");
+// if (
+//   process.env.NODE_ENV === "production" &&
+//   (!authConfig.JWT_SECRET || authConfig.JWT_SECRET === "your-secret-key")
+// ) {
+//   throw new Error("JWT secret is misconfigured for production.");
+// }
+if (process.env.NODE_ENV === "production") {
+  const s = authConfig.JWT_SECRET;
+  if (
+    !s ||
+    s === "your-secret-key" ||
+    s === "dev-insecure-secret" ||
+    s.length < 32
+  ) {
+    throw new Error("JWT secret is misconfigured for production.");
+  }
 }
 export interface JWTPayload {
+  sub: string;
   userId: string;
   email: string;
   iat: number;

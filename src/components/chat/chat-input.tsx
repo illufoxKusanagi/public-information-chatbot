@@ -52,7 +52,7 @@ export default function ChatInput({
         <Button variant="outline" size="icon" className="rounded-lg w-18 ml-1">
           <p className="body-medium-regular">FAQ</p>
         </Button>
-        <Button variant="outline" size="icon">
+        <Button variant="outline" size="icon" aria-label="Saran">
           <Lightbulb />
         </Button>
       </div>

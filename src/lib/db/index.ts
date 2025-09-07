@@ -21,6 +21,7 @@ export async function insertRagData(
       throw new Error("No data provided for insertion");
     }
     const dataArray = Array.isArray(data) ? data : [data];
+    const EXPECTED_DIM = 768;
     for (let i = 0; i < dataArray.length; i++) {
       const record = dataArray[i];
       console.log(`🔍 Validating record ${i + 1}:`, {
@@ -47,6 +48,13 @@ export async function insertRagData(
 
       if (record.embedding.length === 0) {
         throw new Error(`Record ${i + 1}: embedding array cannot be empty`);
+      }
+      if (record.embedding.length !== EXPECTED_DIM) {
+        throw new Error(
+          `Record ${i + 1}: Embedding must be lenght ${EXPECTED_DIM}, got ${
+            record.embedding.length
+          }`
+        );
       }
     }
 

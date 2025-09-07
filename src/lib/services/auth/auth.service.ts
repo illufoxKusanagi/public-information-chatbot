@@ -27,11 +27,11 @@ type RegisterPayload = Omit<
   password: string;
 };
 
-const JWT_SECRET = process.env.JWT_SECRET!;
-// Edited Here: Fixed TOKEN_EXPIRY to have a default value since your env might be undefined
-if (!JWT_SECRET && process.env.NODE_ENV === "production") {
-  throw new Error("JWT_SECRET must be set in production");
+const RAW_JWT_SECRET = process.env.JWT_SECRET!;
+if (!RAW_JWT_SECRET && process.env.NODE_ENV !== "test") {
+  throw new Error("JWT_SECRET must be set");
 }
+const JWT_SECRET = RAW_JWT_SECRET ?? "test-secret";
 const TOKEN_EXPIRY = process.env.TOKEN_EXPIRY ?? "3h";
 
 export function generateToken(userId: string): string {
@@ -59,7 +59,16 @@ export async function getUserFromToken(token: string) {
   return user || null;
 }
 
+function parseExpiryToSecond(v: string) {
+  const m = /^(\d+)([smhd])$/.exec(v);
+  if (!m) return 60 * 60 * 3;
+  const n = Number(m[1]);
+  const mult = { s: 1, m: 60, h: 3600, d: 86400 } as const;
+  return n * mult[m[2] as keyof typeof mult];
+}
+
 export function setAuthCookie(token: string) {
+  const maxAge = parseExpiryToSecond(TOKEN_EXPIRY);
   cookies().set({
     name: "auth-token",
     value: token,
@@ -67,7 +76,7 @@ export function setAuthCookie(token: string) {
     path: "/",
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
-    maxAge: 60 * 60 * 3,
+    maxAge,
   });
 }
 
@@ -80,10 +89,10 @@ export function clearAuthCookie() {
 }
 
 export async function registerUser(userData: RegisterPayload) {
-  // const { name, email, password, role } = userData;
   const { name, email, password } = userData;
-
-  const existingUser = await findUserByEmail(email);
+  const nameTrimmed = name.trim();
+  const emailLowerCase = email.trim().toLowerCase();
+  const existingUser = await findUserByEmail(emailLowerCase);
   if (existingUser) {
     throw new AuthError("Email telah digunakan, silahkan gunakan email lain.");
   }
@@ -96,8 +105,8 @@ export async function registerUser(userData: RegisterPayload) {
   const newUser = await db
     .insert(users)
     .values({
-      name,
-      email: email.toLowerCase(),
+      name: nameTrimmed,
+      email: emailLowerCase,
       password: hashedPassword,
       role: 2,
     })
@@ -115,8 +124,11 @@ export async function registerUser(userData: RegisterPayload) {
 
 export async function loginUser(credentials: LoginPayload) {
   const { identifier, password } = credentials;
+  const newIdentifier = identifier.includes("@")
+    ? identifier.trim().toLowerCase()
+    : identifier.trim();
 
-  const user = await findUserByIdentifier(identifier);
+  const user = await findUserByIdentifier(newIdentifier);
   if (!user || !user.password) {
     throw new AuthError("Kredensial tidak valid");
   }

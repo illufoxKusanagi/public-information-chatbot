@@ -77,7 +77,7 @@ export const helpSections: HelpSection[] = [
     items: [
       {
         id: "sources",
-        title: "Darimana chatbot mengambil informasinya?",
+        title: "Dari mana chatbot mengambil informasinya?",
         content:
           "Chatbot mengambil informasi dari dokumen, peraturan, dan data internal yang telah diindeks ke dalam database RAG. Sistem tidak melakukan penelusuran web langsung; jawaban dihasilkan oleh model AI berdasarkan sumber internal tersebut.",
       },
