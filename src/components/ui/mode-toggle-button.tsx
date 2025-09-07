@@ -9,9 +9,7 @@ export default function ModeToggleButton() {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <span>
-          <ModeToggle />
-        </span>
+        <ModeToggle />
       </TooltipTrigger>
       <TooltipContent>
         <p>Ganti mode warna</p>

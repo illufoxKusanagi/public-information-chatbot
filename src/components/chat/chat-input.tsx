@@ -20,17 +20,6 @@ export default function ChatInput({
   const submitMessage = () => {
     if (!inputValue.trim() || isLoading) return;
     onSendMessage(inputValue);
-    // if (onSendMessage) {
-    //   onSendMessage(inputValue);
-    // } else {
-    //   // const newChatId = Date.now().toString();
-    //   // const newUserMessage: Message = { role: "user", content: inputValue };
-    //   // localStorage.setItem(
-    //   //   `chat-${newChatId}`,
-    //   //   JSON.stringify([newUserMessage])
-    //   // );
-    //   router.push(`/chat?message=${encodeURIComponent(inputValue)}`);
-    // }
     setInputValue("");
   };
 

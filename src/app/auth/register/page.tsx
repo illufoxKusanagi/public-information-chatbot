@@ -54,7 +54,7 @@ export default function RegisterPage() {
       username: "",
       email: "",
       password: "",
-      // role: UserRole[1],
+      role: 1,
     },
   });
 
@@ -134,7 +134,7 @@ export default function RegisterPage() {
                   </FormItem>
                 )}
               />
-              <FormField
+              {/* <FormField
                 control={form.control}
                 name="role"
                 render={({ field }) => (
@@ -162,7 +162,7 @@ export default function RegisterPage() {
                     <FormMessage />
                   </FormItem>
                 )}
-              />
+              /> */}
               <FormField
                 control={form.control}
                 name="password"
@@ -170,7 +170,11 @@ export default function RegisterPage() {
                   <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input type="password" {...field} />
+                      <Input
+                        type="password"
+                        {...field}
+                        placeholder="Masukkan password"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -197,7 +201,7 @@ export default function RegisterPage() {
           </Button>
           <CardDescription className="text-center">
             Sudah punya akun?{" "}
-            <Link href={"login"} className="text-primary hover:underline">
+            <Link href={"/auth/login"} className="text-primary hover:underline">
               Login disini
             </Link>
           </CardDescription>

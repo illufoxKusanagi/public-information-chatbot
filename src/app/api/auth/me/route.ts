@@ -5,7 +5,6 @@ import {
   clearAuthCookie,
 } from "@/lib/services/auth/auth.service";
 
-// export async function GET(request: NextRequest) {
 export async function GET(_request: NextRequest) {
   const token = getAuthCookie();
 
@@ -15,7 +14,6 @@ export async function GET(_request: NextRequest) {
       { status: 401, headers: { "Cache-Control": "no-store" } }
     );
   }
-  // delete try catch if it's failed
   try {
     const user = await getUserFromToken(token);
     if (!user) {
@@ -29,7 +27,6 @@ export async function GET(_request: NextRequest) {
       { user },
       { headers: { "Cache-Control": "no-store" } }
     );
-    // delete this following linex if it's failed
   } catch (error) {
     clearAuthCookie();
     return NextResponse.json(
