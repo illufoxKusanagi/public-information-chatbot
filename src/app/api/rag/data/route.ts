@@ -1,5 +1,12 @@
-import { insertRagData } from "@/lib/db/index";
-import { NextResponse } from "next/server";
+import {
+  checkRagDataSchema,
+  insertRagData,
+  testDatabaseConnection,
+} from "@/lib/db/index";
+import { generateEmbedding } from "@/lib/services/ai/embeddings.service";
+import { NextRequest, NextResponse } from "next/server";
+
+// Your existing ragDataToInsert array - keeping it exactly as is
 const ragDataToInsert = [
   {
     content: "Ir. Tontro Pahlawanto menjabat sebagai Sekretaris Daerah.",
@@ -11,6 +18,7 @@ const ragDataToInsert = [
       position: "Sekretaris Daerah",
       unit: "Sekretariat Daerah",
     },
+    embedding: [],
   },
   {
     content:
@@ -23,6 +31,7 @@ const ragDataToInsert = [
       position: "Kepala Badan",
       unit: "Badan Pendapatan Daerah",
     },
+    embedding: [],
   },
   {
     content:
@@ -35,6 +44,7 @@ const ragDataToInsert = [
       position: "Asisten",
       unit: "Asisten Perekonomian dan Pembangunan",
     },
+    embedding: [],
   },
   {
     content:
@@ -47,6 +57,7 @@ const ragDataToInsert = [
       position: "Kepala Badan",
       unit: "Badan Perencanaan Pembangunan Daerah",
     },
+    embedding: [],
   },
   {
     content:
@@ -59,6 +70,7 @@ const ragDataToInsert = [
       position: "Kepala Dinas",
       unit: "Dinas Pariwisata, Pemuda dan Olah Raga",
     },
+    embedding: [],
   },
   {
     content:
@@ -71,6 +83,7 @@ const ragDataToInsert = [
       position: "Kepala Dinas",
       unit: "Dinas Perdagangan, Koperasi, dan Usaha Mikro",
     },
+    embedding: [],
   },
   {
     content:
@@ -83,6 +96,7 @@ const ragDataToInsert = [
       position: "Kepala Dinas",
       unit: "Dinas Pendidikan dan Kebudayaan",
     },
+    embedding: [],
   },
   {
     content: "Joko Lelono, AP, M.H menjabat sebagai Inspektur.",
@@ -94,6 +108,7 @@ const ragDataToInsert = [
       position: "Inspektur",
       unit: "Inspektorat Daerah",
     },
+    embedding: [],
   },
   {
     content: "Yudi Hartono, S.Sos, MM menjabat sebagai Sekretaris DPRD.",
@@ -105,6 +120,7 @@ const ragDataToInsert = [
       position: "Sekretaris DPRD",
       unit: "DPRD Kabupaten Madiun",
     },
+    embedding: [],
   },
   {
     content:
@@ -117,6 +133,7 @@ const ragDataToInsert = [
       position: "Kepala Dinas",
       unit: "Dinas Komunikasi dan Informatika",
     },
+    embedding: [],
   },
   {
     content: "Supriyadi, AP., M.Si menjabat sebagai Kepala Dinas Perhubungan.",
@@ -128,6 +145,7 @@ const ragDataToInsert = [
       position: "Kepala Dinas",
       unit: "Dinas Perhubungan",
     },
+    embedding: [],
   },
   {
     content:
@@ -140,6 +158,7 @@ const ragDataToInsert = [
       position: "Kepala Dinas",
       unit: "Dinas Penanaman Modal dan Pelayanan Terpadu Satu Pintu",
     },
+    embedding: [],
   },
   {
     content:
@@ -152,6 +171,7 @@ const ragDataToInsert = [
       position: "Kepala Satuan",
       unit: "Satuan Polisi Pamong Praja",
     },
+    embedding: [],
   },
   {
     content:
@@ -164,6 +184,7 @@ const ragDataToInsert = [
       position: "Asisten",
       unit: "Asisten Pemerintahan Dan Kesejahteraan Rakyat",
     },
+    embedding: [],
   },
   {
     content:
@@ -176,6 +197,7 @@ const ragDataToInsert = [
       position: "Kepala Dinas",
       unit: "Dinas Pengendalian Penduduk dan Keluarga Berencana, Pemberdayaan Perempuan dan Perlindungan Anak",
     },
+    embedding: [],
   },
   {
     content:
@@ -188,6 +210,7 @@ const ragDataToInsert = [
       position: "Kepala Badan",
       unit: "Badan Kepegawaian dan Pengembangan Sumber Daya Manusia",
     },
+    embedding: [],
   },
   {
     content:
@@ -200,6 +223,7 @@ const ragDataToInsert = [
       position: "Staf Ahli",
       unit: "Staf Ahli Bidang Kemasyarakatan dan Sumber Daya Manusia",
     },
+    embedding: [],
   },
   {
     content:
@@ -212,6 +236,7 @@ const ragDataToInsert = [
       position: "Kepala Badan",
       unit: "Badan Kesatuan Bangsa dan Politik",
     },
+    embedding: [],
   },
   {
     content:
@@ -224,6 +249,7 @@ const ragDataToInsert = [
       position: "Staf Ahli",
       unit: "Staf Ahli Bidang Ekonomi Pembangunan Dan Keuangan",
     },
+    embedding: [],
   },
   {
     content:
@@ -236,6 +262,7 @@ const ragDataToInsert = [
       position: "Staf Ahli",
       unit: "Staf Ahli Bidang Pemerintahan Hukum Dan Politik",
     },
+    embedding: [],
   },
   {
     content: "Achmad Romadhon, SH menjabat sebagai Asisten Administrasi Umum.",
@@ -247,6 +274,7 @@ const ragDataToInsert = [
       position: "Asisten",
       unit: "Asisten Administrasi Umum",
     },
+    embedding: [],
   },
   {
     content:
@@ -259,6 +287,7 @@ const ragDataToInsert = [
       position: "Kepala Dinas",
       unit: "Dinas Lingkungan Hidup",
     },
+    embedding: [],
   },
   {
     content: "Imam Nurwedi, S.Sos menjabat sebagai Kepala Dinas Tenaga Kerja.",
@@ -270,6 +299,7 @@ const ragDataToInsert = [
       position: "Kepala Dinas",
       unit: "Dinas Tenaga Kerja",
     },
+    embedding: [],
   },
   {
     content:
@@ -282,6 +312,7 @@ const ragDataToInsert = [
       position: "Kepala Dinas",
       unit: "Dinas Pemberdayaan Masyarakat dan Desa",
     },
+    embedding: [],
   },
   {
     content:
@@ -294,6 +325,7 @@ const ragDataToInsert = [
       position: "Kepala Dinas",
       unit: "Dinas Ketahanan Pangan dan Peternakan",
     },
+    embedding: [],
   },
   {
     content:
@@ -306,6 +338,7 @@ const ragDataToInsert = [
       position: "Kepala Dinas",
       unit: "Dinas Pekerjaan Umum dan Penataan Ruang",
     },
+    embedding: [],
   },
   {
     content:
@@ -318,6 +351,7 @@ const ragDataToInsert = [
       position: "Kepala Dinas",
       unit: "Dinas Perumahan dan Kawasan Permukiman",
     },
+    embedding: [],
   },
   {
     content:
@@ -330,6 +364,7 @@ const ragDataToInsert = [
       position: "Kepala Dinas",
       unit: "Dinas Kependudukan dan Pencatatan Sipil",
     },
+    embedding: [],
   },
   {
     content: "Agung Tri Widodo, S.KM menjabat sebagai Kepala Dinas Kesehatan.",
@@ -341,6 +376,7 @@ const ragDataToInsert = [
       position: "Kepala Dinas",
       unit: "Dinas Kesehatan",
     },
+    embedding: [],
   },
   {
     content:
@@ -353,6 +389,7 @@ const ragDataToInsert = [
       position: "Kepala Dinas",
       unit: "Dinas Perpustakaan dan Kearsipan",
     },
+    embedding: [],
   },
   {
     content:
@@ -365,6 +402,7 @@ const ragDataToInsert = [
       position: "Kepala Badan",
       unit: "Badan Pengelolaan Keuangan dan Aset Daerah",
     },
+    embedding: [],
   },
   {
     content:
@@ -377,6 +415,7 @@ const ragDataToInsert = [
       position: "Kepala Dinas",
       unit: "Dinas Pertanian dan Perikanan",
     },
+    embedding: [],
   },
   {
     content: "Drs. Agung Budiarto menjabat sebagai Plt. Kepala Dinas Sosisl.",
@@ -388,6 +427,7 @@ const ragDataToInsert = [
       position: "Plt. Kepala Dinas",
       unit: "Dinas Sosisl",
     },
+    embedding: [],
   },
   {
     content:
@@ -400,6 +440,7 @@ const ragDataToInsert = [
       position: "Kepala Pelaksana",
       unit: "Badan Penanggulangan Bencana",
     },
+    embedding: [],
   },
   {
     content:
@@ -412,6 +453,7 @@ const ragDataToInsert = [
       position: "Kepala Bagian",
       unit: "Bagian Administrasi Pembangunan",
     },
+    embedding: [],
   },
   {
     content: "Alif Margianto, SH., M.Hum menjabat sebagai Kepala Bagian Hukum.",
@@ -423,6 +465,7 @@ const ragDataToInsert = [
       position: "Kepala Bagian",
       unit: "Bagian Hukum",
     },
+    embedding: [],
   },
   {
     content:
@@ -435,6 +478,7 @@ const ragDataToInsert = [
       position: "Kepala Bagian",
       unit: "Bagian Kesejahteraan Rakyat",
     },
+    embedding: [],
   },
   {
     content:
@@ -447,6 +491,7 @@ const ragDataToInsert = [
       position: "Kepala Bagian",
       unit: "Bagian Organisasi",
     },
+    embedding: [],
   },
   {
     content:
@@ -459,6 +504,7 @@ const ragDataToInsert = [
       position: "Kepala Bagian",
       unit: "Bagian Pemerintahan",
     },
+    embedding: [],
   },
   {
     content:
@@ -471,6 +517,7 @@ const ragDataToInsert = [
       position: "Kepala Bagian",
       unit: "Bagian Pengadaan Barang/Jasa",
     },
+    embedding: [],
   },
   {
     content:
@@ -483,6 +530,7 @@ const ragDataToInsert = [
       position: "Kepala Bagian",
       unit: "Bagian Perekonomian dan Sumber Daya Alam",
     },
+    embedding: [],
   },
   {
     content:
@@ -495,6 +543,7 @@ const ragDataToInsert = [
       position: "Kepala Bagian",
       unit: "Bagian Protokol dan Komunikasi Pimpinan",
     },
+    embedding: [],
   },
   {
     content: "Eryk Sanjaya, AP menjabat sebagai Kepala Bagian Umum.",
@@ -506,6 +555,7 @@ const ragDataToInsert = [
       position: "Kepala Bagian",
       unit: "Bagian Umum",
     },
+    embedding: [],
   },
   {
     content: "Bibit Purwanto, S.Sos, M.Si menjabat sebagai Camat Mejayan.",
@@ -517,6 +567,7 @@ const ragDataToInsert = [
       position: "Camat",
       unit: "Kecamatan Mejayan",
     },
+    embedding: [],
   },
   {
     content: "Tarji, S.STP, M.H menjabat sebagai Camat Dagangan.",
@@ -528,6 +579,7 @@ const ragDataToInsert = [
       position: "Camat",
       unit: "Kecamatan Dagangan",
     },
+    embedding: [],
   },
   {
     content: "Heri Kurniawan, S.STP, M.Si menjabat sebagai Camat Wonoasri.",
@@ -539,6 +591,7 @@ const ragDataToInsert = [
       position: "Camat",
       unit: "Kecamatan Wonoasri",
     },
+    embedding: [],
   },
   {
     content: "Tarnu Ashidiq, S.Ag., M.Si menjabat sebagai Camat Kebonsari.",
@@ -550,6 +603,7 @@ const ragDataToInsert = [
       position: "Camat",
       unit: "Kecamatan Kebonsari",
     },
+    embedding: [],
   },
   {
     content: "Hariono, S.Sos, M.Si menjabat sebagai Camat Madiun.",
@@ -561,6 +615,7 @@ const ragDataToInsert = [
       position: "Camat",
       unit: "Kecamatan Madiun",
     },
+    embedding: [],
   },
   {
     content: "Hery Fajar Nugroho, S.Sos, M.Si menjabat sebagai Camat Dolopo.",
@@ -572,6 +627,7 @@ const ragDataToInsert = [
       position: "Camat",
       unit: "Kecamatan Dolopo",
     },
+    embedding: [],
   },
   {
     content:
@@ -584,6 +640,7 @@ const ragDataToInsert = [
       position: "Camat",
       unit: "Kecamatan Pilangkenceng",
     },
+    embedding: [],
   },
   {
     content: "Alviantoro, S.STP.M.H menjabat sebagai Camat Kare.",
@@ -595,6 +652,7 @@ const ragDataToInsert = [
       position: "Camat",
       unit: "Kecamatan Kare",
     },
+    embedding: [],
   },
   {
     content: "Muhammad Sholeh, S.Sos. M.si menjabat sebagai Camat Sawahan.",
@@ -606,6 +664,7 @@ const ragDataToInsert = [
       position: "Camat",
       unit: "Kecamatan Sawahan",
     },
+    embedding: [],
   },
   {
     content: "Drs. Eko Suwartono menjabat sebagai Camat Wungu.",
@@ -617,6 +676,7 @@ const ragDataToInsert = [
       position: "Camat",
       unit: "Kecamatan Wungu",
     },
+    embedding: [],
   },
   {
     content: "Djoko Susilo, S.Sos menjabat sebagai Camat Gemarang.",
@@ -628,6 +688,7 @@ const ragDataToInsert = [
       position: "Camat",
       unit: "Kecamatan Gemarang",
     },
+    embedding: [],
   },
   {
     content: "Raswiyanto, SH menjabat sebagai Camat Jiwan.",
@@ -639,6 +700,7 @@ const ragDataToInsert = [
       position: "Camat",
       unit: "Kecamatan Jiwan",
     },
+    embedding: [],
   },
   {
     content: "Aksin Muharom, S.Sos menjabat sebagai Camat Balerejo.",
@@ -650,6 +712,7 @@ const ragDataToInsert = [
       position: "Camat",
       unit: "Kecamatan Balerejo",
     },
+    embedding: [],
   },
   {
     content: "Dodi Setiawan, S.IP, MH menjabat sebagai Camat Saradan.",
@@ -661,6 +724,7 @@ const ragDataToInsert = [
       position: "Camat",
       unit: "Kecamatan Saradan",
     },
+    embedding: [],
   },
   {
     content: "Puguh Wijayanto, S.STP menjabat sebagai Camat Geger.",
@@ -672,35 +736,184 @@ const ragDataToInsert = [
       position: "Camat",
       unit: "Kecamatan Geger",
     },
+    embedding: [],
   },
 ];
 
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
-    const result = await insertRagData(ragDataToInsert);
+    console.log("🚀 Starting RAG data insertion process...");
+
+    // Edited Here: Test database connection first
+    const connectionTest = await testDatabaseConnection();
+    if (!connectionTest) {
+      return NextResponse.json(
+        {
+          status: "error",
+          message: "Database connection failed",
+        },
+        { status: 500 }
+      );
+    }
+
+    console.log("✅ Database connection successful");
+
+    // Edited Here: Fixed the embedding generation with proper async/await handling
+    const processedData = [];
+
+    console.log(`📊 Processing ${ragDataToInsert.length} records...`);
+
+    for (let i = 0; i < ragDataToInsert.length; i++) {
+      const item = ragDataToInsert[i];
+      console.log(
+        `🔄 Processing item ${i + 1}/${
+          ragDataToInsert.length
+        }: "${item.content.substring(0, 50)}..."`
+      );
+
+      try {
+        const embedding = await generateEmbedding(item.content);
+
+        if (!embedding || !Array.isArray(embedding) || embedding.length === 0) {
+          throw new Error(
+            `Failed to generate embedding for item ${
+              i + 1
+            } - empty or invalid result`
+          );
+        }
+
+        // Edited Here: Ensure all embedding values are proper numbers
+        const embeddingArray = embedding.map((e, idx) => {
+          const num = typeof e === "number" ? e : parseFloat(e.toString());
+          if (isNaN(num)) {
+            throw new Error(
+              `Invalid embedding value at index ${idx} for item ${i + 1}`
+            );
+          }
+          return num;
+        });
+        if (embeddingArray.length !== 768) {
+          throw new Error(
+            `Embedding dimension mismatch for item ${
+              i + 1
+            }: expected 768, got ${embeddingArray.length}`
+          );
+        }
+
+        processedData.push({
+          content: item.content,
+          data: item.data,
+          embedding: embeddingArray,
+        });
+
+        console.log(
+          `✅ Generated embedding for item ${i + 1} (dimensions: ${
+            embeddingArray.length
+          })`
+        );
+
+        // Edited Here: Add a small delay to avoid rate limiting
+        if (i < ragDataToInsert.length - 1) {
+          await new Promise((resolve) => setTimeout(resolve, 100)); // 100ms delay
+        }
+      } catch (embeddingError) {
+        console.error(
+          `❌ Failed to generate embedding for item ${i + 1}:`,
+          embeddingError
+        );
+        return NextResponse.json(
+          {
+            status: "error",
+            message: `Failed to generate embedding for item ${i + 1}`,
+            error:
+              embeddingError instanceof Error
+                ? embeddingError.message
+                : "Unknown embedding error",
+            itemContent: item.content.substring(0, 100),
+          },
+          { status: 500 }
+        );
+      }
+    }
+
+    console.log(
+      "🎯 All embeddings generated successfully, inserting into database..."
+    );
+
+    // Edited Here: Insert all processed data into the database
+    const result = await insertRagData(processedData);
 
     if (result.success) {
+      console.log(`✅ Successfully inserted ${result.count} records`);
       return NextResponse.json({
         status: "success",
         message: `${result.count} records inserted successfully.`,
-        data: result.data,
+        count: result.count,
+        processed: processedData.length,
       });
     } else {
+      console.error("❌ Database insertion failed:", result.error);
       return NextResponse.json(
         {
           status: "error",
           message: "Failed to insert data into the database.",
           error: result.error,
+          details: result.details,
         },
         { status: 500 }
       );
     }
   } catch (error) {
+    console.error("❌ Unexpected error in RAG data route:", error);
     return NextResponse.json(
       {
         status: "error",
         message: "An unexpected error occurred.",
         error: error instanceof Error ? error.message : "Unknown error",
+        stack: error instanceof Error ? error.stack : undefined,
+      },
+      { status: 500 }
+    );
+  }
+}
+
+// Edited Here: Enhanced GET method for better debugging
+export async function GET(request: NextRequest) {
+  try {
+    console.log("🔍 Testing RAG data route...");
+
+    const connectionTest = await testDatabaseConnection();
+    const schema = await checkRagDataSchema();
+
+    // Edited Here: Test embedding generation with a sample
+    let embeddingTest = null;
+    try {
+      embeddingTest = await generateEmbedding("Test content for embedding");
+      console.log(
+        "✅ Embedding test successful, dimensions:",
+        embeddingTest?.length
+      );
+    } catch (embeddingError) {
+      console.error("❌ Embedding test failed:", embeddingError);
+    }
+
+    return NextResponse.json({
+      message: "RAG data route is working",
+      database_connected: connectionTest,
+      schema: schema,
+      records_to_insert: ragDataToInsert.length,
+      embedding_test: {
+        success: !!embeddingTest,
+        dimensions: embeddingTest?.length || 0,
+        sample: embeddingTest?.slice(0, 5) || [],
+      },
+    });
+  } catch (error) {
+    console.error("❌ GET route error:", error);
+    return NextResponse.json(
+      {
+        error: "Failed to test route",
+        details: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 }
     );

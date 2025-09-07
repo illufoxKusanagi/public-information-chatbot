@@ -34,7 +34,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-// Zod schema for form validation
 const schema = z.object({
   username: z
     .string()
@@ -42,8 +41,7 @@ const schema = z.object({
     .max(20, "Username maksimal 20 karakter"),
   email: z.string().email("Alamat email tidak valid"),
   password: z.string().min(8, "Password minimal 8 karakter"),
-  // Use nativeEnum for enums in Zod
-  role: z.enum(UserRole),
+  role: z.number(),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -56,7 +54,7 @@ export default function RegisterPage() {
       username: "",
       email: "",
       password: "",
-      role: UserRole.User,
+      role: 1,
     },
   });
 
@@ -71,7 +69,6 @@ export default function RegisterPage() {
       const result = await response.json();
 
       if (!response.ok) {
-        // If the server says the email exists, show an error on the form
         if (response.status === 409) {
           form.setError("email", {
             type: "manual",
@@ -80,11 +77,9 @@ export default function RegisterPage() {
         }
         throw new Error(result.error || "Gagal mendaftar.");
       }
-
       toast.success(
         "Akun berhasil dibuat! Anda akan dialihkan ke halaman login."
       );
-      // Redirect to login page after a short delay
       setTimeout(() => {
         router.push("/auth/login");
       }, 2000);
@@ -139,7 +134,7 @@ export default function RegisterPage() {
                   </FormItem>
                 )}
               />
-              <FormField
+              {/* <FormField
                 control={form.control}
                 name="role"
                 render={({ field }) => (
@@ -167,7 +162,7 @@ export default function RegisterPage() {
                     <FormMessage />
                   </FormItem>
                 )}
-              />
+              /> */}
               <FormField
                 control={form.control}
                 name="password"
@@ -175,7 +170,11 @@ export default function RegisterPage() {
                   <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input type="password" {...field} />
+                      <Input
+                        type="password"
+                        {...field}
+                        placeholder="Masukkan password"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -202,7 +201,7 @@ export default function RegisterPage() {
           </Button>
           <CardDescription className="text-center">
             Sudah punya akun?{" "}
-            <Link href={"login"} className="text-primary hover:underline">
+            <Link href={"/auth/login"} className="text-primary hover:underline">
               Login disini
             </Link>
           </CardDescription>

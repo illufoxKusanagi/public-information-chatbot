@@ -1,9 +1,8 @@
 "use client";
 
 import { AppSidebar } from "@/components/ui/app-sidebar";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { Suspense } from "react";
-import { ModeToggle } from "@/components/ui/dark-mode-toggle";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { Suspense, useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import ChatInput from "@/components/chat/chat-input";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
@@ -12,6 +11,12 @@ import { useChat } from "@/hooks/use-chat";
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import rehypeHighlight from "rehype-highlight";
+import { useSearchParams, useRouter } from "next/navigation";
+import ModeToggleButton from "@/components/ui/mode-toggle-button";
+import HelpButton from "@/components/ui/help-button";
+import { useAuth } from "@/app/context/auth-context";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 function TextBubble({
   role,
@@ -21,21 +26,20 @@ function TextBubble({
   return (
     <div
       className={cn(
-        "flex w-full items-start gap-4 rounded-lg p-4",
+        "flex w-full mb-4",
         role === "user" ? "justify-end" : "justify-start"
       )}
     >
       <div
         className={cn(
-          "max-w-2xl rounded-lg p-3",
+          "max-w-[70%] rounded-lg px-4 py-2",
           role === "user"
             ? "bg-primary text-primary-foreground"
             : "bg-muted text-muted-foreground",
           isThinking && "animate-pulse"
         )}
       >
-        {/* <p className="body-medium-regular">{content}</p> */}
-        <section className="prose prose-sm dark:prose-invert max-w-none">
+        <section className="prose prose-sm max-w-none">
           <ReactMarkdown
             rehypePlugins={[rehypeRaw, rehypeHighlight]}
             components={{
@@ -109,17 +113,111 @@ function ChatHistory({
 
 export default function ChatPage() {
   const { messages, isLoading, handleSendMessage } = useChat();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const chatIdParam = searchParams.get("id");
+  const chatId = chatIdParam ? parseInt(chatIdParam, 10) : null;
+
+  const [chatTitle, setChatTitle] = useState<string>("");
+  const [titleLoading, setTitleLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Edited Here: Add authentication check
+  const { isAuthenticated, isLoading: authLoading, user } = useAuth();
+
+  // Edited Here: Redirect to login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      router.push("/auth/login");
+      return;
+    }
+  }, [isAuthenticated, authLoading, router]);
+
+  // ✅ Updated to use API route instead of direct database call
+  useEffect(() => {
+    const fetchTitle = async () => {
+      if (!isAuthenticated || authLoading) {
+        return;
+      }
+      if (chatId && !isNaN(chatId)) {
+        setTitleLoading(true);
+        setError(null);
+        console.log(`chat id adalah: ${chatId}`);
+        try {
+          const response = await fetch(`/api/chat/title/${chatId}`);
+          if (!response.ok) {
+            if (response.status === 404) {
+              throw new Error("Chat tidak ditemukan");
+            } else if (response.status === 403) {
+              throw new Error("Akses ditolak");
+            } else {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+          }
+          const data = await response.json();
+          if (data.error) {
+            throw new Error(data.error);
+          }
+          setChatTitle(data.title || `Chat #${chatId}`);
+        } catch (error) {
+          console.error("Failed to fetch chat title:", error);
+          setChatTitle(`Chat #${chatId}`);
+          setError(error instanceof Error ? error.message : "Unknown error");
+        } finally {
+          setTitleLoading(false);
+        }
+      } else {
+        setChatTitle("New Chat");
+        setTitleLoading(false);
+      }
+    };
+    fetchTitle();
+    console.log(`isAuthenticated is: ${isAuthenticated}`);
+  }, [chatId, isAuthenticated, authLoading]);
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+  console.log(`Is authenticated in chat page: ${isAuthenticated}`);
+  if (!isAuthenticated) {
+    return null;
+  }
+
   return (
     <div className="flex flex-col h-screen relative overflow-hidden">
-      <div className="absolute top-4 right-4 z-10">
-        <ModeToggle />
+      <div className="flex absolute gap-4 top-4 right-4 z-10">
+        <ModeToggleButton />
+        <HelpButton />
+        {isAuthenticated ? (
+          <div className="flex items-center gap-2 px-2 py-1">
+            <span className="body-medium-bold">Hello, {user?.name}</span>
+          </div>
+        ) : (
+          <Link href={"/auth/login"}>
+            <Button>Login</Button>
+          </Link>
+        )}
       </div>
       <SidebarProvider defaultOpen={true}>
-        <div className="flex flex-row w-full">
+        <div className="flex flex-row w-full ">
           <AppSidebar />
           <main className="flex flex-col w-full relative">
             <div className="flex bg-secondary min-h-16 w-full items-center justify-center">
-              <p className="body-medium-bold">Chat baru</p>
+              <SidebarTrigger className="ml-4 absolute left-0 justify-center" />
+              <p className="body-medium-bold">
+                {titleLoading
+                  ? "Memuat judul..."
+                  : error
+                  ? "New Chat"
+                  : chatTitle}
+              </p>
             </div>
             <ScrollArea className="flex-1 overflow-y-auto">
               <Suspense fallback={<div>Loading chat...</div>}>
@@ -127,13 +225,11 @@ export default function ChatPage() {
               </Suspense>
             </ScrollArea>
             <div className="flex p-2 justify-center w-full">
-              {/* This input is for follow-up messages, not implemented in this example */}
               <ChatInput
                 onSendMessage={handleSendMessage}
                 isLoading={isLoading}
               />
             </div>
-            {/* <ChatPageContent /> */}
             <footer className="flex flex-col h-6 w-full justify-center items-center">
               <p className="body-small-regular">
                 Made with 💗 by Illufox Kasunagi

@@ -1,5 +1,42 @@
+// // Add this to your existing AppSidebar component
+
+// import { useAuth } from "@/app/context/auth-context";
+// import { Button } from "@/components/ui/button";
+// import { LogOut, User } from "lucide-react";
+
+// // Edited Here: Add user section to sidebar
+// export function AppSidebar() {
+//   const { user, logout, isAuthenticated } = useAuth();
+
+//   return (
+//     <div className="sidebar">
+//       {/* ...existing sidebar content... */}
+
+//       {/* Edited Here: Add user section at bottom of sidebar */}
+//       {isAuthenticated && user && (
+//         <div className="mt-auto p-4 border-t">
+//           <div className="flex items-center gap-2 mb-2">
+//             <User className="h-4 w-4" />
+//             <span className="text-sm font-medium">{user.name}</span>
+//           </div>
+//           <div className="text-xs text-muted-foreground mb-2">{user.email}</div>
+//           <Button
+//             variant="outline"
+//             size="sm"
+//             onClick={logout}
+//             className="w-full"
+//           >
+//             <LogOut className="h-4 w-4 mr-2" />
+//             Logout
+//           </Button>
+//         </div>
+//       )}
+//     </div>
+//   );
+// }
+
 "use client";
-import { Plus } from "lucide-react";
+import { LogOut, Plus, User } from "lucide-react";
 
 import {
   Sidebar,
@@ -17,9 +54,9 @@ import {
 import { cn } from "@/lib/utils";
 import { NavUser } from "./nav-user";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { useAuth } from "@/app/context/auth-context";
 
 interface ChatHistoryItem {
   id: number;
@@ -28,144 +65,141 @@ interface ChatHistoryItem {
   createdAt: string;
 }
 
-const data = {
-  user: {
-    name: "Illufox Kasunagi",
-    email: "illufox@examp.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
-};
-
-// interface ChatHistoryItem {
-//   id: string;
-//   title: string;
-// }
-
-const items = [
-  {
-    title: "Chat 1",
-    url: "#",
-  },
-  {
-    title: "Chat 2",
-    url: "#",
-  },
-  {
-    title: "Chat 3",
-    url: "#",
-  },
-];
-
 export function AppSidebar() {
-  const pathname = usePathname();
-  const router = useRouter();
   const { open } = useSidebar();
-  const [history, setHistory] = useState<ChatHistoryItem[]>([]);
+  const [chatHistory, setChatHistory] = useState<ChatHistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const { user, isAuthenticated } = useAuth();
+  const data = {
+    user: {
+      name: user?.name || "Guest",
+      email: user?.email || "guest@example.com",
+      avatar: "/avatars/shadcn.jpg",
+    },
+  };
 
   useEffect(() => {
-    const fetchHistory = async () => {
+    const fetchChatHistory = async () => {
+      // Edited Here: Only fetch chat history if user is authenticated
+      if (!isAuthenticated || !user) {
+        setChatHistory([]);
+        setIsLoading(false);
+        return;
+      }
+
       try {
-        setIsLoading(true);
         const response = await fetch("/api/chat/history");
-        if (!response.ok) throw new Error("Failed to fetch history");
+        if (!response.ok) {
+          if (response.status === 401) {
+            console.warn("Unauthorized access to chat history");
+            setChatHistory([]);
+            return;
+          }
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
         const data = await response.json();
-        setHistory(data);
+        setChatHistory(data);
       } catch (error) {
-        toast.error("Could not load chat history");
+        console.error("Failed to fetch chat history:", error);
+        setChatHistory([]);
       } finally {
         setIsLoading(false);
       }
     };
-    fetchHistory();
-  }, []);
 
-  const handleNewChat = async () => {
-    try {
-      const response = await fetch("/api/chat/history", { method: "POST" });
-      if (!response.ok) throw new Error("Failet to create new chat");
-      const newChat = await response.json();
-      router.push(`/chat/${newChat.id}`);
-    } catch (error) {
-      toast.error("Could not create a new chat session");
-    }
-  };
-
-  // useEffect(() => {
-  //   const keys = Object.keys(localStorage).filter((key) =>
-  //     key.startsWith("chat_")
-  //   );
-  //   const history = keys
-  //     .map((key) => {
-  //       const messages = JSON.parse(localStorage.getItem(key) || "[]");
-  //       return {
-  //         id: key.replace("chat_", ""),
-  //         title: messages[0]?.content.substring(0, 25) + "..." || "New Chat",
-  //       };
-  //     })
-  //     .sort((a, b) => parseInt(b.id) - parseInt(a.id));
-  //   setChatHistory(history);
-  // }, [pathname]);
+    fetchChatHistory();
+  }, [isAuthenticated, user]); // Edited Here: Added auth dependencies
 
   return (
     <Sidebar variant="sidebar" collapsible="icon">
       <SidebarHeader
         className={cn(
-          "overflow-hidden text-ellipsis whitespace-nowrap transition-all duration-500 ease-in-out",
-          open ? "block max-h-12 opacity-100" : "max-h-0 opacity-0 hidden"
+          "overflow-hidden transition-all duration-300 ease-in-out",
+          open ? "px-4 pt-4 pb-2 block opacity-100" : "p-0 opacity-0 hidden"
         )}
       >
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild>
+            <SidebarMenuButton asChild className="hover:bg-accent/50 h-16">
               <Link href="/">
-                <h1 className="text-lg font-bold">Portal Informasi Publik</h1>
+                <h1 className="body-big-bold text-primary text-center">
+                  Portal Informasi Publik
+                </h1>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
-      <SidebarContent>
+
+      <SidebarContent
+        className={cn(
+          "flex flex-col gap-4 transition-all duration-300",
+          open ? "px-4 py-2" : "p-2"
+        )}
+      >
         <SidebarMenu>
-          {/* NEW CHAT BUTTON */}
           <SidebarMenuButton
-            // onClick={handleNewChat}
-            variant={"block"}
-            className="py-4"
+            variant="block"
+            className="h-10 px-4 py-3 justify-start gap-3 transition-colors"
             asChild
           >
             <Link href="/">
-              <Plus size="icon" />
-              {open && <span>Percakapan Baru</span>}
+              <Plus size="icon" className="shrink-0" />
+              {open && (
+                <span className="body-medium-bold">Percakapan Baru</span>
+              )}
             </Link>
           </SidebarMenuButton>
-          <SidebarGroup>
-            <SidebarGroupLabel>History</SidebarGroupLabel>
-            <SidebarGroupContent>
-              {isLoading ? (
-                <p className="p-2 body-small-regular text-muted-foreground">
-                  Loading...
-                </p>
-              ) : history.length > 0 ? (
-                history.map((chat) => (
-                  <SidebarMenuItem key={chat.id}>
-                    <Link href={`/chat/${chat.id}`}>
-                      <SidebarMenuButton className="w-full">
-                        {chat.title}
-                      </SidebarMenuButton>
-                    </Link>
-                  </SidebarMenuItem>
-                ))
-              ) : (
-                <p className="p-2 body-small-regular text-muted-foreground">
-                  No chat history
-                </p>
+
+          <SidebarGroup className="mt-2">
+            <SidebarGroupLabel className="px-2 py-2">
+              <span className="body-small-bold text-muted-foreground uppercase ">
+                History
+              </span>
+            </SidebarGroupLabel>
+            <SidebarGroupContent className="space-y-1">
+              {isAuthenticated && (
+                <SidebarGroup>
+                  <SidebarGroupLabel>Chat History</SidebarGroupLabel>
+                  <SidebarGroupContent>
+                    <SidebarMenu>
+                      {isLoading ? (
+                        <SidebarMenuItem>
+                          <SidebarMenuButton disabled>
+                            <span>Loading...</span>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      ) : chatHistory.length > 0 ? (
+                        chatHistory.map((chat) => (
+                          <SidebarMenuItem key={chat.id}>
+                            <SidebarMenuButton asChild>
+                              <Link href={`/chat?id=${chat.id}`}>
+                                <span className="truncate">{chat.title}</span>
+                              </Link>
+                            </SidebarMenuButton>
+                          </SidebarMenuItem>
+                        ))
+                      ) : (
+                        <SidebarMenuItem>
+                          <SidebarMenuButton disabled>
+                            <span>No chats yet</span>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      )}
+                    </SidebarMenu>
+                  </SidebarGroupContent>
+                </SidebarGroup>
               )}
             </SidebarGroupContent>
           </SidebarGroup>
         </SidebarMenu>
       </SidebarContent>
-      <SidebarFooter className="absolute bottom-0 w-full">
+      <SidebarFooter
+        className={cn(
+          "absolute bottom-0 w-full border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
+          open ? "p-3" : "p-2"
+        )}
+      >
         <NavUser user={data.user} />
       </SidebarFooter>
     </Sidebar>

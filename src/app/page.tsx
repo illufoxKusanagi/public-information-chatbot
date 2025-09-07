@@ -1,26 +1,24 @@
 "use client";
 
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/ui/app-sidebar";
-import { ModeToggle } from "@/components/ui/dark-mode-toggle";
 import MainContent from "@/components/chat/main-chat-page";
-import { Button } from "@/components/ui/button";
-import { Bubbles, CircleQuestionMark } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import HelpButton from "@/components/ui/help-button";
+import ModeToggleButton from "@/components/ui/mode-toggle-button";
+import { useAuth } from "./context/auth-context";
+import { Button } from "@/components/ui/button";
+import { Bubbles } from "lucide-react";
 
 export default function Home() {
-  const isOpen: boolean = true; // This can be controlled by state or props if needed
+  const [isOpen, setIsOpen] = useState(true);
+  const { isAuthenticated, user, isLoading } = useAuth();
   const [dbStatus, setDbStatus] = useState<string>("");
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isDbLoading, setIsDbLoading] = useState<boolean>(false);
 
   const insertTestRagData = async () => {
-    setIsLoading(true);
+    setIsDbLoading(true);
     setDbStatus("");
     try {
       const response = await fetch("/api/rag/data", {
@@ -28,7 +26,7 @@ export default function Home() {
       });
       const result = await response.json();
       if (response.ok) {
-        setDbStatus("Insert users succesful!");
+        setDbStatus("Insert rag datas succesful!");
       } else {
         console.error("Error inserting data:", result.error);
         setDbStatus(`Error: ${result.message}`);
@@ -36,36 +34,46 @@ export default function Home() {
     } catch (error) {
       setDbStatus(`Error: ${(error as Error).message}`);
     } finally {
-      setIsLoading(false);
+      setIsDbLoading(false);
     }
   };
   return (
     <div className="flex flex-col h-screen relative">
       <div className="flex gap-4 absolute top-4 right-4">
-        <ModeToggle />
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Link href="/help">
-              <Button variant="outline" size={"icon"} className="p-2">
-                <CircleQuestionMark size="icon" />
-              </Button>
-            </Link>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Bantuan</p>
-          </TooltipContent>
-        </Tooltip>
+        <ModeToggleButton />
+        <HelpButton />
+        {!isAuthenticated ? (
+          <Link href={"/auth/login"}>
+            <Button>Login</Button>
+          </Link>
+        ) : (
+          <div className="flex items-center">
+            <p className="body-medium-regular">Halo, {user?.name}</p>
+          </div>
+        )}
       </div>
       <SidebarProvider defaultOpen={true}>
         <div className="flex flex-row h-full w-full">
           {isOpen && <AppSidebar />}
+          <SidebarTrigger className="ml-4 mt-4" size={"xl"} />
           <main className="flex-1 overflow-y-auto">
             <MainContent />
           </main>
         </div>
       </SidebarProvider>
-      <footer className="flex flex-col w-full items-center absolute h-fit bottom-0">
-        <p className="body-small-regular">Made with 💗 by Illufox Kasunagi</p>
+      <footer className="flex flex-col w-full items-center absolute h-fit bg-accent p-2 bottom-0">
+        <p className="body-small-regular">
+          Made with 💗 by{" "}
+          <span className="hover:underline">
+            <Link
+              href={"https://github.com/illufoxKusanagi"}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Illufox Kasunagi
+            </Link>
+          </span>
+        </p>
         {dbStatus && <p className="text-sm font-medium">{dbStatus}</p>}
         <Button
           onClick={insertTestRagData}
@@ -73,7 +81,7 @@ export default function Home() {
           variant="outline"
         >
           <Bubbles size="icon" className="m-2" />
-          {isLoading ? "Testing..." : "Test Database"}
+          {isDbLoading ? "Testing..." : "Test Database"}
         </Button>
       </footer>
     </div>
