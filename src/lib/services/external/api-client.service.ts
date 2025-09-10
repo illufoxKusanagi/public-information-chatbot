@@ -7,109 +7,26 @@ interface ExternalDocument {
 }
 
 export class ExternalAPIClient {
-  private readonly timeout: number;
+  private timeout: number;
+  private baseWeatherUrl: string;
 
   constructor() {
-    this.timeout = parseInt(process.env.EXTERNAL_API_TIMEOUT || "5000");
+    this.timeout = parseInt(process.env.EXTERNAL_API_TIMEOUT || "10000");
+
+    // Fix: Set proper weather API base URL
+    this.baseWeatherUrl =
+      process.env.OPENWEATHER_BASE_URL ||
+      "https://api.openweathermap.org/data/2.5";
   }
 
-  /**
-   * Pencarian keyword yang mengintegrasikan multiple external APIs
-   */
-  async keywordSearch(
-    query: string,
-    limit: number = 20
-  ): Promise<ExternalDocument[]> {
-    const documents: ExternalDocument[] = [];
-    const lowerQuery = query.toLowerCase();
+  // ...existing code...
 
+  private async fetchWeatherData(city: string): Promise<ExternalDocument[]> {
     try {
-      // Parallel fetch dari berbagai API berdasarkan keyword detection
-      const promises: Promise<ExternalDocument[]>[] = [];
-
-      // Weather-related queries
-      if (this.isWeatherQuery(lowerQuery)) {
-        console.log(
-          "[API CLIENT] Detected weather query, fetching weather data..."
-        );
-        promises.push(this.fetchWeatherData(query));
-      }
-
-      // News-related queries
-      if (this.isNewsQuery(lowerQuery)) {
-        console.log("[API CLIENT] Detected news query, fetching news data...");
-        promises.push(this.fetchNewsData(query));
-      }
-
-      // Holiday-related queries
-      if (this.isHolidayQuery(lowerQuery)) {
-        console.log(
-          "[API CLIENT] Detected holiday query, fetching holiday data..."
-        );
-        promises.push(this.fetchHolidayData());
-      }
-
-      // Country/location queries
-      if (this.isCountryQuery(lowerQuery)) {
-        console.log(
-          "[API CLIENT] Detected country query, fetching country data..."
-        );
-        promises.push(this.fetchCountryData(query));
-      }
-
-      if (promises.length === 0) {
-        console.log(
-          "[API CLIENT] No external API queries detected for:",
-          query
-        );
-        return [];
-      }
-
-      // Execute all promises
-      const results = await Promise.allSettled(promises);
-
-      results.forEach((result, index) => {
-        if (result.status === "fulfilled") {
-          console.log(
-            `[API CLIENT] Promise ${index} fulfilled with ${result.value.length} results`
-          );
-          documents.push(...result.value);
-        } else {
-          console.error(
-            `[API CLIENT] Promise ${index} rejected:`,
-            result.reason
-          );
-        }
-      });
-
-      console.log(`[API CLIENT] Total documents fetched: ${documents.length}`);
-      return documents.slice(0, limit);
-    } catch (error) {
-      console.error("[API CLIENT] Error in keyword search:", error);
-      return [];
-    }
-  }
-
-  /**
-   * Fetch weather data from OpenWeatherMap
-   */
-  private async fetchWeatherData(query: string): Promise<ExternalDocument[]> {
-    try {
-      const apiKey = process.env.OPENWEATHER_API_KEY;
-      if (!apiKey) {
-        console.log("[API CLIENT] OpenWeather API key not configured");
-        return [];
-      }
-
-      // Extract city from query (default to Madiun for your use case)
-      const city = this.extractCityFromQuery(query) || "Madiun";
-      const url = `${
-        process.env.OPENWEATHER_BASE_URL
-      }/weather?q=${encodeURIComponent(
-        city
-      )}&appid=${apiKey}&units=metric&lang=id`;
-
       console.log("[API CLIENT] Fetching weather for city:", city);
+
+      // Fix: Use the baseWeatherUrl property instead of undefined variable
+      const url = `${this.baseWeatherUrl}/weather?q=${city}&appid=${process.env.OPENWEATHER_API_KEY}&units=metric&lang=id`;
 
       const response = await fetch(url, {
         method: "GET",
@@ -118,33 +35,29 @@ export class ExternalAPIClient {
       });
 
       if (!response.ok) {
-        console.error(
-          `[API CLIENT] Weather API error: ${response.status} ${response.statusText}`
-        );
-        return [];
+        throw new Error(`Weather API HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
-      console.log(
-        "[API CLIENT] Weather data received:",
-        data.name,
-        data.weather[0].description
-      );
-
-      const content = `Cuaca di ${data.name}: ${data.weather[0].description}, suhu ${data.main.temp}°C, terasa seperti ${data.main.feels_like}°C. Kelembaban ${data.main.humidity}%, tekanan ${data.main.pressure} hPa. Kecepatan angin ${data.wind.speed} m/s.`;
 
       return [
         {
-          id: `weather_${data.name}_${Date.now()}`,
-          content,
+          id: `weather_${city}_${Date.now()}`,
+          content: `Cuaca ${data.name}: ${data.weather[0].description}, suhu ${data.main.temp}°C, kelembaban ${data.main.humidity}%`,
           source: "openweather",
-          metadata: data,
+          metadata: {
+            city: data.name,
+            temperature: data.main.temp,
+            description: data.weather[0].description,
+            humidity: data.main.humidity,
+            wind_speed: data.wind?.speed || 0,
+          },
           timestamp: new Date(),
         },
       ];
     } catch (error) {
       console.error("[API CLIENT] Weather API error:", error);
-      return [];
+      throw error;
     }
   }
 

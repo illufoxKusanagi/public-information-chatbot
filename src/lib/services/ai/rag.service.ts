@@ -4,6 +4,100 @@ import { db } from "@/lib/db/index";
 import { generateEmbedding } from "./embeddings.service";
 import { DynamicEmbeddingCacheHelper } from "./dynamic-enbedding-cache.service";
 
+// import { findRelevantContents } from './rag.service';
+import { analyzeQuery, QueryAnalysis } from "./semantic-search.service";
+import { WeatherApiService } from "./weather.service";
+// import { WeatherApiService } from '../api/weather.api.service'; // Use existing service
+
+export interface EnhancedSearchResult {
+  query_analysis: QueryAnalysis;
+  weather_data?: any;
+  rag_contents?: any[];
+  total_sources: number;
+  search_strategy: string;
+}
+
+export class EnhancedRAGService {
+  private weatherService: WeatherApiService; // Use existing service
+
+  constructor() {
+    this.weatherService = new WeatherApiService(); // Use existing service
+  }
+
+  async searchRelevantData(query: string): Promise<EnhancedSearchResult> {
+    try {
+      // Step 1: Analyze the query semantically
+      const analysis = await analyzeQuery(query);
+      console.log("[ENHANCED RAG] Query analysis:", analysis);
+
+      const result: EnhancedSearchResult = {
+        query_analysis: analysis,
+        total_sources: 0,
+        search_strategy: "semantic_enhanced",
+      };
+
+      // Step 2: Route to appropriate services based on analysis
+      if (analysis.type === "weather" && analysis.confidence > 0.7) {
+        // High confidence weather query - use weather API
+        try {
+          const weatherData = await this.weatherService.getWeatherData(
+            analysis
+          );
+          if (weatherData) {
+            result.weather_data = weatherData;
+            result.total_sources++;
+          }
+        } catch (error) {
+          console.error("[ENHANCED RAG] Weather service error:", error);
+        }
+      }
+
+      // Step 3: Always try RAG for additional context
+      try {
+        // Enhance query for RAG search based on analysis
+        const enhancedQuery = this.buildEnhancedQuery(query, analysis);
+        const ragContents = await findRelevantContents(enhancedQuery);
+
+        if (ragContents && ragContents.length > 0) {
+          result.rag_contents = ragContents;
+          result.total_sources += ragContents.length;
+        }
+      } catch (error) {
+        console.error("[ENHANCED RAG] RAG service error:", error);
+      }
+
+      return result;
+    } catch (error) {
+      console.error("[ENHANCED RAG] Enhanced RAG service error:", error);
+      throw error;
+    }
+  }
+
+  private buildEnhancedQuery(
+    originalQuery: string,
+    analysis: QueryAnalysis
+  ): string {
+    let enhancedQuery = originalQuery;
+
+    // Add location context if detected
+    if (analysis.location) {
+      enhancedQuery += ` ${analysis.location}`;
+    }
+
+    // Add type-specific keywords
+    if (analysis.type === "official") {
+      enhancedQuery += " pejabat daerah camat bupati";
+    }
+
+    // Add keywords from analysis
+    if (analysis.keywords.length > 0) {
+      enhancedQuery += " " + analysis.keywords.join(" ");
+    }
+
+    return enhancedQuery;
+  }
+}
+
 // Initialize cache helper
 const cacheHelper = new DynamicEmbeddingCacheHelper();
 
@@ -82,6 +176,7 @@ async function traditionalSearch(userQuery: string) {
     return [];
   }
 }
+// }
 
 // export async function findRelevantContents(userQuery: string) {
 //   try {
@@ -115,88 +210,88 @@ async function traditionalSearch(userQuery: string) {
 //   }
 // }
 
-export async function getChatHistoryTitle(
-  chatId: number,
-  userId: string
-): Promise<string> {
-  try {
-    const chat = await db.query.chatHistory.findFirst({
-      where: and(eq(chatHistory.id, chatId), eq(chatHistory.userId, userId)),
-      columns: {
-        title: true,
-      },
-    });
+// export async function getChatHistoryTitle(
+//   chatId: number,
+//   userId: string
+// ): Promise<string> {
+//   try {
+//     const chat = await db.query.chatHistory.findFirst({
+//       where: and(eq(chatHistory.id, chatId), eq(chatHistory.userId, userId)),
+//       columns: {
+//         title: true,
+//       },
+//     });
 
-    if (!chat || !chat.title || chat.title.trim() === "") {
-      return `Chat #${chatId}`;
-    }
+//     if (!chat || !chat.title || chat.title.trim() === "") {
+//       return `Chat #${chatId}`;
+//     }
 
-    return chat.title.trim();
-  } catch (error) {
-    console.error("Failed to get chat history title:", error);
-    return `Chat #${chatId}`;
-  }
-}
+//     return chat.title.trim();
+//   } catch (error) {
+//     console.error("Failed to get chat history title:", error);
+//     return `Chat #${chatId}`;
+//   }
+// }
 
-export async function getChatHistoryTitleWithAuth(
-  chatId: number,
-  userId: string
-): Promise<{
-  title: string;
-  success: boolean;
-  error?: string;
-}> {
-  try {
-    console.log("getChatHistoryTitleWithAuth called with:", { chatId, userId });
-    if (!chatId || isNaN(chatId) || chatId <= 0) {
-      console.log("Invalid chatId:", chatId);
-      return {
-        title: "New Chat",
-        success: false,
-        error: "Invalid chat ID",
-      };
-    }
-    if (!userId) {
-      console.log("Invalid userId:", userId);
-      return {
-        title: `Chat #${chatId}`,
-        success: false,
-        error: "User ID is required",
-      };
-    }
-    const chat = await db.query.chatHistory.findFirst({
-      where: and(eq(chatHistory.id, chatId), eq(chatHistory.userId, userId)),
-      columns: {
-        title: true,
-      },
-    });
-    if (!chat) {
-      console.log("Chat not found or access denied");
-      return {
-        title: `Chat #${chatId}`,
-        success: false,
-        error: "Chat not found or access denied",
-      };
-    }
-    const title = chat.title;
-    if (!title || title.trim() === "") {
-      console.log("Chat found but title is empty");
-      return {
-        title: `Chat #${chatId}`,
-        success: true,
-      };
-    }
-    console.log("Successfully retrieved title:", title);
-    return {
-      title: title.trim(),
-      success: true,
-    };
-  } catch (error) {
-    console.error("Failed to get chat history title with auth:", error);
-    return {
-      title: `Chat #${chatId}`,
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown error",
-    };
-  }
-}
+// export async function getChatHistoryTitleWithAuth(
+//   chatId: number,
+//   userId: string
+// ): Promise<{
+//   title: string;
+//   success: boolean;
+//   error?: string;
+// }> {
+//   try {
+//     console.log("getChatHistoryTitleWithAuth called with:", { chatId, userId });
+//     if (!chatId || isNaN(chatId) || chatId <= 0) {
+//       console.log("Invalid chatId:", chatId);
+//       return {
+//         title: "New Chat",
+//         success: false,
+//         error: "Invalid chat ID",
+//       };
+//     }
+//     if (!userId) {
+//       console.log("Invalid userId:", userId);
+//       return {
+//         title: `Chat #${chatId}`,
+//         success: false,
+//         error: "User ID is required",
+//       };
+//     }
+//     const chat = await db.query.chatHistory.findFirst({
+//       where: and(eq(chatHistory.id, chatId), eq(chatHistory.userId, userId)),
+//       columns: {
+//         title: true,
+//       },
+//     });
+//     if (!chat) {
+//       console.log("Chat not found or access denied");
+//       return {
+//         title: `Chat #${chatId}`,
+//         success: false,
+//         error: "Chat not found or access denied",
+//       };
+//     }
+//     const title = chat.title;
+//     if (!title || title.trim() === "") {
+//       console.log("Chat found but title is empty");
+//       return {
+//         title: `Chat #${chatId}`,
+//         success: true,
+//       };
+//     }
+//     console.log("Successfully retrieved title:", title);
+//     return {
+//       title: title.trim(),
+//       success: true,
+//     };
+//   } catch (error) {
+//     console.error("Failed to get chat history title with auth:", error);
+//     return {
+//       title: `Chat #${chatId}`,
+//       success: false,
+//       error: error instanceof Error ? error.message : "Unknown error",
+//     };
+//   }
+// }

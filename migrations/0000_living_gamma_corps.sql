@@ -10,8 +10,17 @@ CREATE TABLE "rag_data" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"content" text NOT NULL,
 	"data" jsonb NOT NULL,
-	"embedding" vector(768) NOT NULL,
-	"created_at" timestamp DEFAULT now()
+	"embedding" vector(768),
+	"source" varchar(50) DEFAULT 'internal' NOT NULL,
+	"external_id" varchar(255),
+	"is_cached" boolean DEFAULT false,
+	"cache_expires_at" timestamp,
+	"last_fetched_at" timestamp,
+	"similarity_score" real,
+	"fetch_count" integer DEFAULT 0,
+	"api_response_metadata" jsonb,
+	"created_at" timestamp DEFAULT now(),
+	"updated_at" timestamp DEFAULT now()
 );
 --> statement-breakpoint
 CREATE TABLE "users" (
