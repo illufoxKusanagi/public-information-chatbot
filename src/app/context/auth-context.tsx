@@ -30,11 +30,13 @@ export const AuthContext = createContext<AuthContextType | undefined>(
   undefined
 );
 
+// Edited Here: Changed from default export to named export to match your imports
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [user, setUser] = useState<User | null>(null);
   const router = useRouter();
 
+  // Edited Here: Derive isAuthenticated from user state instead of separate state
   const isAuthenticated = !!user;
 
   const checkAuth = async (): Promise<boolean> => {
@@ -74,6 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (!response.ok) {
         const data = await response.json();
+        // Edited Here: Check for both 'error' and 'message' fields from your API response
         throw new Error(data.error || data.message || "Login failed");
       }
 

@@ -74,7 +74,7 @@ export default function Home() {
             </Link>
           </span>
         </p>
-        {/* {dbStatus && <p className="text-sm font-medium">{dbStatus}</p>}
+        {dbStatus && <p className="text-sm font-medium">{dbStatus}</p>}
         <Button
           onClick={insertTestRagData}
           disabled={isLoading}
@@ -82,7 +82,7 @@ export default function Home() {
         >
           <Bubbles size="icon" className="m-2" />
           {isDbLoading ? "Testing..." : "Test Database"}
-        </Button> */}
+        </Button>
       </footer>
     </div>
   );

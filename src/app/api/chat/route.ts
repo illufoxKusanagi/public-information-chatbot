@@ -57,27 +57,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     const contextData = await findRelevantContents(userMessage);
-    // Enhanced context with source information
     const context =
       contextData.length > 0
         ? `
 CONTEXT:
 ---
-${contextData
-  .map(
-    (item, index) => `
-[SUMBER ${index + 1}: ${item.source?.toUpperCase() || "INTERNAL"}]
-${
-  typeof item.data === "object"
-    ? JSON.stringify(item.data, null, 2)
-    : item.content
-}
----`
-  )
-  .join("\n")}
+${JSON.stringify(contextData, null, 2)}
 ---
 `
-        : "CONTEXT: Tidak ada informasi yang ditemukan di database internal dan eksternal.";
+        : "CONTEXT: Tidak ada informasi yang ditemukan di database.";
 
     const systemPrompt = `
 Anda adalah asisten AI untuk Portal Informasi Pemerintah Kabupaten Madiun.
@@ -90,35 +78,7 @@ PERATURAN PENTING:
 4.  Jika informasi yang diminta tidak ada di dalam CONTEXT, Anda WAJIB menjawab dengan sopan bahwa Anda tidak memiliki informasi tersebut di dalam database.
 5.  JANGAN PERNAH menggunakan pengetahuan umum Anda atau mengarang jawaban.
 6.  Jika pengguna hanya menyapa (misal: "halo", "selamat pagi"), jawab sapaan tersebut dengan ramah tanpa mencari informasi.
-7.  Jika menggunakan data dari sumber eksternal (OPENWEATHER, NEWSAPI, dll), sebutkan sumbernya di akhir jawaban.
-
-FORMAT JAWABAN:
-- Jawab dengan jelas dan informatif
-- Jika data dari API eksternal, tambahkan: "*(Sumber: [NAMA_SUMBER])*" di akhir
-- Contoh: "Cuaca hari ini di Madiun cerah dengan suhu 28°C. *(Sumber: OpenWeather)*"
 `;
-    //     const context =
-    //       contextData.length > 0
-    //         ? `
-    // CONTEXT:
-    // ---
-    // ${JSON.stringify(contextData, null, 2)}
-    // ---
-    // `
-    //         : "CONTEXT: Tidak ada informasi yang ditemukan di database.";
-
-    //     const systemPrompt = `
-    // Anda adalah asisten AI untuk Portal Informasi Pemerintah Kabupaten Madiun.
-    // Tugas utama Anda adalah menjawab pertanyaan pengguna berdasarkan informasi yang disediakan di dalam CONTEXT.
-
-    // PERATURAN PENTING:
-    // 1.  HANYA GUNAKAN BAHASA INDONESIA
-    // 2.  APABILA USER MENGGUNAKAN BAHASA INGGRIS, BERITAHU UNTUK MENGGUNAKAN BAHASA INDONESIA
-    // 3.  JAWAB HANYA BERDASARKAN INFORMASI DARI CONTEXT.
-    // 4.  Jika informasi yang diminta tidak ada di dalam CONTEXT, Anda WAJIB menjawab dengan sopan bahwa Anda tidak memiliki informasi tersebut di dalam database.
-    // 5.  JANGAN PERNAH menggunakan pengetahuan umum Anda atau mengarang jawaban.
-    // 6.  Jika pengguna hanya menyapa (misal: "halo", "selamat pagi"), jawab sapaan tersebut dengan ramah tanpa mencari informasi.
-    // `;
     const augmentedPrompt = `${systemPrompt} ${context}\nPERTANYAAN PENGGUNA: "${userMessage}"\nJAWABAN ANDA:`;
     const result = await genAI.models.generateContent({
       model: generativeModel,

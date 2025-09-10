@@ -2,45 +2,9 @@ import { chatHistory, ragData } from "@/lib/db/schema";
 import { cosineDistance, sql, gt, desc, eq, and } from "drizzle-orm";
 import { db } from "@/lib/db/index";
 import { generateEmbedding } from "./embeddings.service";
-import { DynamicEmbeddingCacheHelper } from "./dynamic-enbedding-cache.service";
-
-// Initialize cache helper
-const cacheHelper = new DynamicEmbeddingCacheHelper();
 
 export async function findRelevantContents(userQuery: string) {
   try {
-    console.log("[RAG SERVICE] Mencari konten relevan untuk:", userQuery);
-
-    // Use the dynamic cache helper
-    const results = await cacheHelper.search(userQuery, 5);
-
-    if (results && results.length > 0) {
-      console.log(`[RAG SERVICE] Ditemukan ${results.length} hasil relevan`);
-
-      // Format results for consistency
-      return results.map((result) => ({
-        content: result.content,
-        data: result.data,
-        similarity: result.similarity,
-        source: result.source || "internal",
-      }));
-    }
-
-    console.log("[RAG SERVICE] Tidak ada hasil relevan ditemukan");
-    return [];
-  } catch (error) {
-    console.error("Failed to search relevant contents:", error);
-
-    // Fallback to traditional search
-    return await traditionalSearch(userQuery);
-  }
-}
-
-// Keep the traditional search as fallback
-async function traditionalSearch(userQuery: string) {
-  try {
-    console.log("[RAG SERVICE] Using traditional search as fallback");
-
     const embedding = await generateEmbedding(userQuery);
     if (!Array.isArray(embedding) || embedding.length !== 768) {
       console.error(
@@ -49,11 +13,6 @@ async function traditionalSearch(userQuery: string) {
       );
       return [];
     }
-
-    const cosineDistance = (embedding1: any, embedding2: number[]) => {
-      return sql<number>`1 - (${embedding1} <=> ${embedding2})`;
-    };
-
     const similarity = sql<number>`1 - (${cosineDistance(
       ragData.embedding,
       embedding as number[]
@@ -64,56 +23,17 @@ async function traditionalSearch(userQuery: string) {
         content: ragData.content,
         data: ragData.data,
         similarity: similarity,
-        source: ragData.source,
       })
       .from(ragData)
-      .where(
-        gt(
-          similarity,
-          parseFloat(process.env.RAG_SIMILARITY_THRESHOLD || "0.55")
-        )
-      )
+      .where(gt(similarity, 0.5))
       .orderBy(desc(similarity))
-      .limit(parseInt(process.env.RAG_MAX_RESULTS || "5"));
-
+      .limit(5);
     return relevantContent;
   } catch (error) {
-    console.error("Failed in traditional search:", error);
+    console.error("Failed to search relevant contents:", error);
     return [];
   }
 }
-
-// export async function findRelevantContents(userQuery: string) {
-//   try {
-//     const embedding = await generateEmbedding(userQuery);
-//     if (!Array.isArray(embedding) || embedding.length !== 768) {
-//       console.error(
-//         "Invalid embedding dimension:",
-//         Array.isArray(embedding) ? embedding.length : "n/a"
-//       );
-//       return [];
-//     }
-//     const similarity = sql<number>`1 - (${cosineDistance(
-//       ragData.embedding,
-//       embedding as number[]
-//     )})`;
-
-//     const relevantContent = await db
-//       .select({
-//         content: ragData.content,
-//         data: ragData.data,
-//         similarity: similarity,
-//       })
-//       .from(ragData)
-//       .where(gt(similarity, 0.5))
-//       .orderBy(desc(similarity))
-//       .limit(5);
-//     return relevantContent;
-//   } catch (error) {
-//     console.error("Failed to search relevant contents:", error);
-//     return [];
-//   }
-// }
 
 export async function getChatHistoryTitle(
   chatId: number,
