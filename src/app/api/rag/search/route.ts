@@ -1,4 +1,4 @@
-import { DynamicEmbeddingCacheHelper } from "@/lib/services/ai/dynamic-enbedding-cache.service";
+import { DynamicEmbeddingCacheHelper } from "@/lib/services/ai/dynamic-embedding-cache.service";
 import { NextResponse } from "next/server";
 
 export async function POST() {

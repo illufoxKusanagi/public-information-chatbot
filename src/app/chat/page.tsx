@@ -117,15 +117,11 @@ export default function ChatPage() {
   const router = useRouter();
   const chatIdParam = searchParams.get("id");
   const chatId = chatIdParam ? parseInt(chatIdParam, 10) : null;
-
   const [chatTitle, setChatTitle] = useState<string>("");
   const [titleLoading, setTitleLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-
-  // Edited Here: Add authentication check
   const { isAuthenticated, isLoading: authLoading, user } = useAuth();
 
-  // Edited Here: Redirect to login if not authenticated
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       router.push("/auth/login");
@@ -133,16 +129,25 @@ export default function ChatPage() {
     }
   }, [isAuthenticated, authLoading, router]);
 
-  // ✅ Updated to use API route instead of direct database call
+  useEffect(() => {
+    if (!isAuthenticated || authLoading) return;
+    const currentPath = window.location.pathname;
+    if (currentPath === "/" || (currentPath !== "/chat" && !chatId)) {
+      router.push("/chat");
+    }
+  }, [isAuthenticated, authLoading, chatId, router]);
+
   useEffect(() => {
     const fetchTitle = async () => {
       if (!isAuthenticated || authLoading) {
         return;
       }
+
       if (chatId && !isNaN(chatId)) {
         setTitleLoading(true);
         setError(null);
         console.log(`chat id adalah: ${chatId}`);
+
         try {
           const response = await fetch(`/api/chat/title/${chatId}`);
           if (!response.ok) {
@@ -154,10 +159,12 @@ export default function ChatPage() {
               throw new Error(`HTTP error! status: ${response.status}`);
             }
           }
+
           const data = await response.json();
           if (data.error) {
             throw new Error(data.error);
           }
+
           setChatTitle(data.title || `Chat #${chatId}`);
         } catch (error) {
           console.error("Failed to fetch chat title:", error);
@@ -171,6 +178,7 @@ export default function ChatPage() {
         setTitleLoading(false);
       }
     };
+
     fetchTitle();
     console.log(`isAuthenticated is: ${isAuthenticated}`);
   }, [chatId, isAuthenticated, authLoading]);
@@ -185,6 +193,80 @@ export default function ChatPage() {
       </div>
     );
   }
+  // export default function ChatPage() {
+  //   const { messages, isLoading, handleSendMessage } = useChat();
+  //   const searchParams = useSearchParams();
+  //   const router = useRouter();
+  //   const chatIdParam = searchParams.get("id");
+  //   const chatId = chatIdParam ? parseInt(chatIdParam, 10) : null;
+
+  //   const [chatTitle, setChatTitle] = useState<string>("");
+  //   const [titleLoading, setTitleLoading] = useState<boolean>(true);
+  //   const [error, setError] = useState<string | null>(null);
+
+  //   // Edited Here: Add authentication check
+  //   const { isAuthenticated, isLoading: authLoading, user } = useAuth();
+
+  //   // Edited Here: Redirect to login if not authenticated
+  //   useEffect(() => {
+  //     if (!authLoading && !isAuthenticated) {
+  //       router.push("/auth/login");
+  //       return;
+  //     }
+  //   }, [isAuthenticated, authLoading, router]);
+
+  //   // ✅ Updated to use API route instead of direct database call
+  //   useEffect(() => {
+  //     const fetchTitle = async () => {
+  //       if (!isAuthenticated || authLoading) {
+  //         return;
+  //       }
+  //       if (chatId && !isNaN(chatId)) {
+  //         setTitleLoading(true);
+  //         setError(null);
+  //         console.log(`chat id adalah: ${chatId}`);
+  //         try {
+  //           const response = await fetch(`/api/chat/title/${chatId}`);
+  //           if (!response.ok) {
+  //             if (response.status === 404) {
+  //               throw new Error("Chat tidak ditemukan");
+  //             } else if (response.status === 403) {
+  //               throw new Error("Akses ditolak");
+  //             } else {
+  //               throw new Error(`HTTP error! status: ${response.status}`);
+  //             }
+  //           }
+  //           const data = await response.json();
+  //           if (data.error) {
+  //             throw new Error(data.error);
+  //           }
+  //           setChatTitle(data.title || `Chat #${chatId}`);
+  //         } catch (error) {
+  //           console.error("Failed to fetch chat title:", error);
+  //           setChatTitle(`Chat #${chatId}`);
+  //           setError(error instanceof Error ? error.message : "Unknown error");
+  //         } finally {
+  //           setTitleLoading(false);
+  //         }
+  //       } else {
+  //         setChatTitle("New Chat");
+  //         setTitleLoading(false);
+  //       }
+  //     };
+  //     fetchTitle();
+  //     console.log(`isAuthenticated is: ${isAuthenticated}`);
+  //   }, [chatId, isAuthenticated, authLoading]);
+
+  //   if (authLoading) {
+  //     return (
+  //       <div className="flex items-center justify-center min-h-screen">
+  //         <div className="text-center">
+  //           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
+  //           <p>Loading...</p>
+  //         </div>
+  //       </div>
+  //     );
+  //   }
   console.log(`Is authenticated in chat page: ${isAuthenticated}`);
   if (!isAuthenticated) {
     return null;
@@ -197,7 +279,7 @@ export default function ChatPage() {
         <HelpButton />
         {isAuthenticated ? (
           <div className="flex items-center gap-2 px-2 py-1">
-            <span className="body-medium-bold">Hello, {user?.name}</span>
+            <span className="body-medium-bold">Hello, {user?.username}</span>
           </div>
         ) : (
           <Link href={"/auth/login"}>

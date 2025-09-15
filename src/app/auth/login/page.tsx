@@ -25,6 +25,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { useEffect } from "react";
+import { useAuth } from "@/app/context/auth-context";
 
 const schema = z.object({
   identifier: z.string().min(1, "Email atau password harus diisi"),
@@ -35,6 +37,16 @@ type FormData = z.infer<typeof schema>;
 
 export default function LoginPage() {
   const router = useRouter();
+  const { login, isAuthenticated, isLoading } = useAuth();
+
+  // Edited here: Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated && !isLoading) {
+      console.log("User already authenticated, redirecting to home");
+      router.push("/");
+    }
+  }, [isAuthenticated, isLoading, router]);
+
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -45,28 +57,85 @@ export default function LoginPage() {
 
   const onSubmit: SubmitHandler<FormData> = async (data) => {
     try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-      const result = await response.json();
-      if (!response.ok) {
-        form.setError("root", {
-          type: "manual",
-          message: result.error || "Login gagal, silahkan coba lagi",
-        });
-        return;
-      }
-      toast.success(`Login berhasil, Okaerinasai, ${result.user.name}-san!`);
+      console.log("Attempting login with:", data.identifier);
+
+      await login(data.identifier, data.password);
+
+      // Edited here: Show success message and redirect
+      toast.success(`Login berhasil, Okaerinasai, ${data.identifier}-san!`);
       router.push("/");
     } catch (error) {
-      toast.error("Login gagal, silahkan coba lagi");
+      console.error("Login error:", error);
+
+      // Edited here: Better error handling
+      if (error instanceof Error) {
+        if (
+          error.message.includes("Invalid credentials") ||
+          error.message.includes("tidak valid")
+        ) {
+          form.setError("root", {
+            type: "manual",
+            message: "Email/username atau password tidak valid",
+          });
+        } else {
+          form.setError("root", {
+            type: "manual",
+            message: error.message,
+          });
+        }
+      } else {
+        form.setError("root", {
+          type: "manual",
+          message: "Login gagal, silahkan coba lagi",
+        });
+      }
     }
   };
+  // const router = useRouter();
+  // const form = useForm<FormData>({
+  //   resolver: zodResolver(schema),
+  //   defaultValues: {
+  //     identifier: "",
+  //     password: "",
+  //   },
+  // });
 
+  // const onSubmit: SubmitHandler<FormData> = async (data) => {
+  //   try {
+  //     const response = await fetch("/api/auth/login", {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify(data),
+  //     });
+  //     const result = await response.json();
+  //     if (!response.ok) {
+  //       form.setError("root", {
+  //         type: "manual",
+  //         message: `Login gagal, silahkan coba lagi: ${result.error}`,
+  //       });
+  //       return;
+  //     }
+  //     toast.success(
+  //       `Login berhasil, Okaerinasai, ${result.data.user.name}-san!`
+  //     );
+  //     router.push("/");
+  //   } catch (error) {
+  //     toast.error(`Login gagal, silahkan coba lagi: ${error}`);
+  //   }
+  // };
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
+          <p className="mt-4 body-big-bold">Checking authentication...</p>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="flex h-screen items-center justify-center">
       <Card className="w-full max-w-xs">

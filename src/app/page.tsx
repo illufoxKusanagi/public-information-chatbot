@@ -16,6 +16,7 @@ export default function Home() {
   const { isAuthenticated, user, isLoading } = useAuth();
   const [dbStatus, setDbStatus] = useState<string>("");
   const [isDbLoading, setIsDbLoading] = useState<boolean>(false);
+  console.log("Is authenticated in login route: ", isAuthenticated);
 
   const insertTestRagData = async () => {
     setIsDbLoading(true);
@@ -48,7 +49,7 @@ export default function Home() {
           </Link>
         ) : (
           <div className="flex items-center">
-            <p className="body-medium-regular">Halo, {user?.name}</p>
+            <p className="body-medium-regular">Halo, {user?.username}</p>
           </div>
         )}
       </div>

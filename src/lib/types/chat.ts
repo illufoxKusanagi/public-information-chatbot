@@ -1,6 +1,8 @@
 export interface Message {
   content: string;
   role: "user" | "bot";
+  timestamp?: string;
+  sources?: any[];
 }
 
 export interface ChatState {

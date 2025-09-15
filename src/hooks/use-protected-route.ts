@@ -10,9 +10,13 @@ export function useProtectedRoute() {
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      router.push("/auth/login");
+      router.replace("/auth/login");
     }
   }, [isAuthenticated, isLoading, router]);
 
-  return { isAuthenticated, isLoading };
+  return {
+    isAuthenticated,
+    isLoading,
+    isProtected: !isLoading && isAuthenticated,
+  };
 }

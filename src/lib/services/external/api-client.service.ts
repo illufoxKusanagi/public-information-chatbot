@@ -4,6 +4,7 @@ interface ExternalDocument {
   source: string;
   metadata: any;
   timestamp: Date;
+  title?: string;
 }
 
 export class ExternalAPIClient {

@@ -95,6 +95,7 @@ import {
 } from "@/components/ui/sidebar";
 import Link from "next/link";
 import { useAuth } from "@/app/context/auth-context";
+import { toast } from "sonner";
 
 export function NavUser({
   user,
@@ -106,6 +107,15 @@ export function NavUser({
   };
 }) {
   const { logout } = useAuth();
+  const handleLogout = () => {
+    toast("Apakah anda yakin?", {
+      description: "Anda akan login lagi nanti",
+      action: {
+        label: "Ya",
+        onClick: logout,
+      },
+    });
+  };
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -146,10 +156,7 @@ export function NavUser({
                 Settings
               </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem
-              className="flex flex-row"
-              onClick={() => logout()}
-            >
+            <DropdownMenuItem className="flex flex-row" onClick={handleLogout}>
               <LogOut className="h-4 w-4 mr-2" />
               Log out
             </DropdownMenuItem>

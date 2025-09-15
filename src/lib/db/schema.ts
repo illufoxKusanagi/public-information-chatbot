@@ -14,12 +14,34 @@ import {
 
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
-  name: text("name").notNull().unique(),
+  username: varchar("username", { length: 50 }).notNull().unique(),
   email: text("email").notNull().unique(),
+  role: varchar("role").default("user").notNull(),
   avatar: text("avatar"),
-  role: integer("role").default(2),
   password: text("password").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  lastLogin: timestamp("last_login"),
+});
+
+export const chats = pgTable("chats", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id")
+    .references(() => users.id)
+    .notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const messages = pgTable("messages", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  chatId: uuid("chat_id")
+    .references(() => users.id)
+    .notNull(),
+  role: varchar("role", { length: 20 }).notNull(), // user or bot
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export const ragData = pgTable("rag_data", {
@@ -27,7 +49,7 @@ export const ragData = pgTable("rag_data", {
   content: text("content").notNull(),
   data: jsonb("data").notNull(),
   embedding: vector("embedding", { dimensions: 768 }),
-
+  title: text("title"),
   source: varchar("source", { length: 50 }).default("internal").notNull(),
   external_id: varchar("external_id", { length: 255 }),
 
@@ -45,7 +67,7 @@ export const ragData = pgTable("rag_data", {
 });
 
 export const chatHistory = pgTable("chat_history", {
-  id: serial("id").primaryKey(),
+  id: uuid("id").primaryKey(),
   userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }),
   title: text("title").notNull(),
   messages: jsonb("messages"),
