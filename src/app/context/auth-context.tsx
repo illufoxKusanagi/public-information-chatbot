@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import type { User } from "@/lib/types/auth";
-import { z } from "zod";
+import { string, z } from "zod";
 import {
   createContext,
   ReactNode,
@@ -30,6 +30,8 @@ interface AuthContextType extends AuthState {
   refreshAuth: () => Promise<void>;
   clearError: () => void;
   logout: () => Promise<void>;
+  getAuthHeaders: () => { [key: string]: string };
+  getToken: () => string | null;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(
@@ -91,6 +93,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
     localStorage.removeItem(REFRESH_STORAGE_KEY);
   }, []);
 
+  const getToken = useCallback(() => {
+    if (typeof window === "undefined") {
+      return null;
+    }
+    return localStorage.getItem(AUTH_STORAGE_KEY);
+  }, []);
+
+  const getAuthHeaders = useCallback(() => {
+    const token = getToken();
+    const headers: { [key: string]: string } = {
+      "Content-Type": "application/json",
+    };
+
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+    return headers;
+  }, []);
+
   // const login = useCallback(
   //   async (identifier: string, password: string) => {
   //     try {
@@ -139,7 +160,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       // Edited here: Store token BEFORE setting state
-      localStorage.setItem(AUTH_STORAGE_KEY, data.data.accessToken);
+      if (typeof window !== "undefined") {
+        localStorage.setItem(AUTH_STORAGE_KEY, data.data.accessToken);
+      }
 
       // Edited here: Map the response structure correctly
       const userData = {
@@ -158,8 +181,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       });
 
       console.log("Login successful, user set:", userData); // Debug log
-
-      // Don't redirect here - let the component handle it
+      toast.success(`Login berhasil, Okaerinasai, ${userData.username}-san!`);
     } catch (error) {
       console.error("Login error:", error);
       setState((prev) => ({
@@ -221,7 +243,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
 
         // Edited here: Store token BEFORE setting state
-        localStorage.setItem(AUTH_STORAGE_KEY, data.data.accessToken);
+        if (typeof window !== "undefined") {
+          localStorage.setItem(AUTH_STORAGE_KEY, data.data.accessToken);
+        }
 
         // Edited here: Map the response structure correctly
         const userData = {
@@ -240,6 +264,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         });
 
         console.log("Registration successful, user set:", userData); // Debug log
+        toast.success(
+          `Okaerinasai, ${userData.username}-san! Akun berhasil dibuat.`
+        );
       } catch (error) {
         console.error("Registration error:", error);
         setState((prev) => ({
@@ -271,8 +298,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
       });
     }
+    toast.info("Logout berhasil!");
     router.push("/auth/login");
-    toast.success("Logout berhasil!");
   }, [clearTokens, router]);
 
   // const refreshAuth = useCallback(async () => {
@@ -317,7 +344,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return;
       }
 
-      console.log("Refreshing auth with token..."); // Debug log
+      console.log("Refreshing auth with token...");
 
       const response = await fetch("/api/auth/me", {
         headers: {
@@ -333,7 +360,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
         throw new Error(data.message || "Auth refresh failed");
       }
 
-      // Edited here: Handle /me endpoint response structure
       const userData = {
         id: data.data.user.id,
         email: data.data.user.email,
@@ -373,6 +399,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       isAuthenticated: state.isAuthenticated,
       user: state.user?.username,
       isLoading: state.isLoading,
+      hasToken: !!getToken(),
     });
   }, [state.isAuthenticated, state.user, state.isLoading]);
 
@@ -392,6 +419,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     register,
     refreshAuth,
     clearError,
+    getAuthHeaders,
+    getToken,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

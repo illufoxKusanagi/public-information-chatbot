@@ -38,6 +38,24 @@ export default function Home() {
       setIsDbLoading(false);
     }
   };
+  // Show loading screen while checking auth
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Checking authentication...</p>
+        </div>
+      </div>
+    );
+  }
+  // Redirect to login if not authenticated
+  if (!isAuthenticated) {
+    if (typeof window !== "undefined") {
+      window.location.href = "/auth/login";
+    }
+    return null;
+  }
   return (
     <div className="flex flex-col h-screen relative">
       <div className="flex gap-4 absolute top-4 right-4">

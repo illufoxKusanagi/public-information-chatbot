@@ -67,7 +67,7 @@ export const ragData = pgTable("rag_data", {
 });
 
 export const chatHistory = pgTable("chat_history", {
-  id: uuid("id").primaryKey(),
+  id: uuid("id").primaryKey().defaultRandom(),
   userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }),
   title: text("title").notNull(),
   messages: jsonb("messages"),

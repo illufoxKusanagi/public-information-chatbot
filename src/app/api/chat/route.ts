@@ -54,11 +54,13 @@ async function generateChatTitle(message: string): Promise<string> {
 async function chatHandler(
   request: AuthenticatedRequest & { validatedData?: any }
 ) {
-  const { message, chatId } = request.validatedData;
+  const { message, chatId } = request.validatedData || {};
   const db = getDb();
   const userId = request.user!.userId;
   let currentChatId = chatId;
-
+  if (!message) {
+    throw new ApiError("Pesan tidak boleh kosong", 400, "MISSING_MESSAGE");
+  }
   // try {
   //   if (!currentChatId) {
   //     const title = await generateChatTitle(message);
