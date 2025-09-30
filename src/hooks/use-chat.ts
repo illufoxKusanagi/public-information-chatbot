@@ -112,7 +112,7 @@ export function useChat() {
         });
         const botMessage: Message = {
           role: "bot",
-          content: data.data.message.content,
+          content: data.data.aiMessage.content,
           timestamp: new Date().toISOString(),
           sources: data.data.sources,
         };

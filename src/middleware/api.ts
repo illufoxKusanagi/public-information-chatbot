@@ -124,7 +124,7 @@ export function createRateLimitMiddleware(
 ) {
   const requests = new Map<string, { count: number; resetTime: number }>();
 
-  return async (req: NextRequest) => {
+  return async (req: NextRequest): Promise<NextRequest> => {
     // Edited here: Enhanced IP detection for better rate limiting
     const ip = req.ip || req.headers.get("x-forwarded-for") || "unknown";
     const now = Date.now();
@@ -134,12 +134,12 @@ export function createRateLimitMiddleware(
 
     if (!current) {
       requests.set(ip, { count: 1, resetTime });
-      return;
+      return req;
     }
 
     if (now > current.resetTime) {
       requests.set(ip, { count: 1, resetTime });
-      return;
+      return req;
     }
 
     if (current.count >= maxRequests) {
@@ -147,6 +147,7 @@ export function createRateLimitMiddleware(
     }
 
     current.count++;
+    return req;
   };
 }
 
@@ -155,7 +156,11 @@ export function handleApiError(error: unknown): NextResponse {
 
   if (error instanceof ApiError) {
     return NextResponse.json(
-      { error: error.message, code: error.code },
+      {
+        success: false,
+        error: error.message,
+        code: error.code,
+      },
       { status: error.statusCode }
     );
   }
@@ -163,8 +168,9 @@ export function handleApiError(error: unknown): NextResponse {
   if (error instanceof z.ZodError) {
     return NextResponse.json(
       {
+        success: false,
         error: "Validation failed",
-        details: error,
+        details: error.issues,
         code: "VALIDATION_ERROR",
       },
       { status: 400 }
@@ -172,17 +178,21 @@ export function handleApiError(error: unknown): NextResponse {
   }
 
   return NextResponse.json(
-    { error: "Internal server error", code: "INTERNAL_ERROR" },
+    {
+      success: false,
+      error: "Internal server error",
+      code: "INTERNAL_ERROR",
+    },
     { status: 500 }
   );
 }
 
 export function withMiddleware(
-  ...middlewares: Array<(req: any) => Promise<any>>
+  ...middlewares: Array<(req: NextRequest) => Promise<NextRequest>>
 ) {
   return async (
     req: NextRequest,
-    handler: (req: any) => Promise<NextResponse>
+    handler: (req: NextRequest) => Promise<NextResponse>
   ) => {
     try {
       let processedReq = req;

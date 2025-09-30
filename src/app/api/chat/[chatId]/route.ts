@@ -6,7 +6,7 @@ import {
   ApiError,
 } from "@/middleware/api";
 import { verifyToken } from "@/lib/auth/jwt";
-import { eq, and, asc } from "drizzle-orm";
+import { eq, asc, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 interface ChatParams {
@@ -16,11 +16,17 @@ interface ChatParams {
 // Hybrid handler that supports both authenticated and guest users
 async function getChatHandler(
   request: NextRequest,
-  { params }: { params: ChatParams }
+  { params }: { params: Promise<ChatParams> }
 ) {
-  const chatId = params.chatId;
+  const chatId = (await params).chatId;
   let userId = null;
   let isAuthenticated = false;
+
+  // Get pagination parameters from query string
+  const url = new URL(request.url);
+  const page = parseInt(url.searchParams.get("page") || "1");
+  const limit = Math.min(parseInt(url.searchParams.get("limit") || "50"), 100); // Max 100 messages per page
+  const offset = (page - 1) * limit;
 
   // Try to get user authentication, but don't require it
   try {
@@ -33,20 +39,14 @@ async function getChatHandler(
         isAuthenticated = true;
       }
     }
-  } catch (error) {
-    console.log("No valid auth token, attempting guest access");
+  } catch {
+    console.log(`[GET_CHAT] No valid auth token`);
   }
-
-  console.log(
-    `[GET_CHAT] ${
-      isAuthenticated ? "User " + userId : "Guest"
-    } requesting chat ${chatId}`
-  );
 
   try {
     const db = getDb();
 
-    // Get chat details
+    // Get chat info
     const [chat] = await db
       .select({
         id: conversations.id,
@@ -64,9 +64,8 @@ async function getChatHandler(
       throw new ApiError("Chat tidak ditemukan", 404, "CHAT_NOT_FOUND");
     }
 
-    // Check access permissions
+    // For guest chats, check if expired
     if (chat.isGuestChat) {
-      // For guest chats, check if expired
       if (chat.expiresAt && new Date() > chat.expiresAt) {
         throw new ApiError(
           "Chat sementara telah kedaluwarsa",
@@ -74,7 +73,6 @@ async function getChatHandler(
           "CHAT_EXPIRED"
         );
       }
-      // Guest chats are accessible by anyone
     } else {
       // For user chats, must be authenticated and own the chat
       if (!isAuthenticated) {
@@ -93,7 +91,15 @@ async function getChatHandler(
       }
     }
 
-    // Get all messages for this chat
+    // Get total message count for pagination
+    const [{ totalMessages }] = await db
+      .select({
+        totalMessages: sql<number>`COUNT(*)`.as("total_messages"),
+      })
+      .from(messages)
+      .where(eq(messages.chatId, chatId));
+
+    // Get paginated messages for this chat
     const chatMessages = await db
       .select({
         id: messages.id,
@@ -103,12 +109,18 @@ async function getChatHandler(
       })
       .from(messages)
       .where(eq(messages.chatId, chatId))
-      .orderBy(asc(messages.createdAt));
+      .orderBy(asc(messages.createdAt))
+      .limit(limit)
+      .offset(offset);
+
+    const totalPages = Math.ceil(totalMessages / limit);
 
     console.log(
       `[GET_CHAT] Found ${
         chat.isGuestChat ? "guest" : "user"
-      } chat ${chatId} with ${chatMessages.length} messages`
+      } chat ${chatId} with ${
+        chatMessages.length
+      }/${totalMessages} messages (page ${page}/${totalPages})`
     );
 
     return NextResponse.json({
@@ -127,7 +139,14 @@ async function getChatHandler(
           content: msg.content,
           timestamp: msg.createdAt,
         })),
-        messageCount: chatMessages.length,
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalMessages,
+          messagesPerPage: limit,
+          hasNextPage: page < totalPages,
+          hasPreviousPage: page > 1,
+        },
       },
     });
   } catch (error) {
@@ -146,7 +165,7 @@ async function deleteChatHandler(
   request: NextRequest,
   { params }: { params: ChatParams }
 ) {
-  const chatId = params.chatId;
+  const chatId = await params.chatId;
   let userId = null;
   let isAuthenticated = false;
 

@@ -3,8 +3,8 @@ import { conversations, messages } from "@/lib/db/schema";
 import { findRelevantContents } from "@/lib/services/ai/rag.service";
 import {
   ApiError,
-  AuthenticatedRequest,
   withMiddleware,
+  createRateLimitMiddleware,
 } from "@/middleware/api";
 import { verifyToken } from "@/lib/auth/jwt";
 import { GoogleGenAI } from "@google/genai";
@@ -33,7 +33,7 @@ const chatMessageSchema = z.object({
     .min(1, "Message cannot be empty")
     .max(4000, "Message is too long")
     .trim(),
-  chatId: z.union([z.string(), z.number()]).optional(), // Accept string, number, or undefined
+  chatId: z.string().uuid("Invalid chat ID format").optional(), // Only accept UUID strings
 });
 
 // Edited here: Fixed generateChatTitle function that was missing
@@ -51,107 +51,116 @@ async function generateChatTitle(message: string): Promise<string> {
   }
 }
 
-async function chatHandler(
-  request: AuthenticatedRequest & { validatedData?: any }
-) {
-  const { message, chatId } = request.validatedData || {};
-  const db = getDb();
-  const userId = request.user!.userId;
-  let currentChatId = chatId;
-  if (!message) {
-    throw new ApiError("Pesan tidak boleh kosong", 400, "MISSING_MESSAGE");
-  }
-  try {
-    if (!currentChatId) {
-      const title = await generateChatTitle(message);
-      const [newChat] = await db
-        .insert(conversations)
-        .values({
-          userId: request.user!.userId,
-          title: title || "New Chat",
-          createdAt: new Date(),
-          // updatedAt: new Date(),
-        })
-        .returning({ id: conversations.id });
-      currentChatId = newChat.id;
-    } else {
-      // Edited here: Your original ownership verification
-      const [existingChat] = await db
-        .select({ userId: conversations.userId })
-        .from(conversations)
-        .where(eq(conversations.id, currentChatId))
-        .limit(1);
+// async function chatHandler(
+//   request: AuthenticatedRequest & { validatedData?: any }
+// ) {
+//   const { message, chatId } = request.validatedData || {};
+//   const db = getDb();
+//   const userId = request.user!.userId;
+//   let currentChatId = chatId;
+//   if (!message) {
+//     throw new ApiError("Pesan tidak boleh kosong", 400, "MISSING_MESSAGE");
+//   }
+//   try {
+//     if (!currentChatId) {
+//       const title = await generateChatTitle(message);
+//       const [newChat] = await db
+//         .insert(conversations)
+//         .values({
+//           userId: request.user!.userId,
+//           title: title || "New Chat",
+//           createdAt: new Date(),
+//           // updatedAt: new Date(),
+//         })
+//         .returning({ id: conversations.id });
+//       currentChatId = newChat.id;
+//     } else {
+//       // Edited here: Your original ownership verification
+//       const [existingChat] = await db
+//         .select({ userId: conversations.userId })
+//         .from(conversations)
+//         .where(eq(conversations.id, currentChatId))
+//         .limit(1);
 
-      if (!existingChat) {
-        throw new ApiError("Chat tidak ditemukan", 404, "CHAT_NOT_FOUND");
-      }
-      if (existingChat.userId !== userId) {
-        throw new ApiError(
-          "Anda tidak memiliki akses ke chat ini",
-          403,
-          "CHAT_ACCESS_DENIED"
-        );
-      }
-    }
+//       if (!existingChat) {
+//         throw new ApiError("Chat tidak ditemukan", 404, "CHAT_NOT_FOUND");
+//       }
+//       if (existingChat.userId !== userId) {
+//         throw new ApiError(
+//           "Anda tidak memiliki akses ke chat ini",
+//           403,
+//           "CHAT_ACCESS_DENIED"
+//         );
+//       }
+//     }
 
-    const [userMessage] = await db
-      .insert(messages)
-      .values({
-        chatId: currentChatId,
-        role: "user",
-        content: message,
-        createdAt: new Date(),
-      })
-      .returning();
+//     const [userMessage] = await db
+//       .insert(messages)
+//       .values({
+//         chatId: currentChatId,
+//         role: "user",
+//         content: message,
+//         createdAt: new Date(),
+//       })
+//       .returning();
 
-    // Edited here: Your original RAG implementation
-    const ragResults = await findRelevantContents(message);
+//     // Edited here: Your original RAG implementation
+//     const ragResults = await findRelevantContents(message);
 
-    const aiResponse = await generateAiResponse(message, ragResults);
-    const [aiMessage] = await db
-      .insert(messages)
-      .values({
-        chatId: currentChatId,
-        role: "bot",
-        content: aiResponse,
-        createdAt: new Date(),
-      })
-      .returning();
+//     const aiResponse = await generateAiResponse(message, ragResults);
+//     const [aiMessage] = await db
+//       .insert(messages)
+//       .values({
+//         chatId: currentChatId,
+//         role: "bot",
+//         content: aiResponse,
+//         createdAt: new Date(),
+//       })
+//       .returning();
 
-    const sources = ragResults.map((r) => ({
-      title: r.title || "Sumber Internal",
-      source: r.source || "INTERNAL",
-      similarity: r.similarity || 0,
-    }));
+//     const sources = ragResults.map((r) => ({
+//       title: r.title || "Sumber Internal",
+//       source: r.source || "INTERNAL",
+//       similarity: r.similarity || 0,
+//     }));
 
-    // Edited here: Your original AI message insertion
+//     // Edited here: Your original AI message insertion
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        chatId: currentChatId,
-        userMessage,
-        aiMessage,
-        sources,
-        context: {
-          totalSources: sources.length,
-          hasExternalData: sources.some((s) => s.source !== "INTERNAL"),
-        },
-      },
-    });
-  } catch (error) {
-    console.error("Chat error: ", error);
-    if (error instanceof ApiError) throw error;
-    throw new ApiError(
-      "Failed to process chat message",
-      500,
-      "CHAT_PROCESSING_ERROR"
-    );
-  }
-}
+//     return NextResponse.json({
+//       success: true,
+//       data: {
+//         chatId: currentChatId,
+//         userMessage,
+//         aiMessage,
+//         sources,
+//         context: {
+//           totalSources: sources.length,
+//           hasExternalData: sources.some((s) => s.source !== "INTERNAL"),
+//         },
+//       },
+//     });
+//   } catch (error) {
+//     console.error("Chat error: ", error);
+//     if (error instanceof ApiError) throw error;
+//     throw new ApiError(
+//       "Failed to process chat message",
+//       500,
+//       "CHAT_PROCESSING_ERROR"
+//     );
+//   }
+// }
 
 // Edited here: Your original superior AI response generation
-async function generateAiResponse(userMessage: string, contextData: any[]) {
+async function generateAiResponse(
+  userMessage: string,
+  contextData: Array<{
+    title?: string;
+    source?: string;
+    content?: string;
+    data?: unknown;
+    similarity?: number;
+  }>
+) {
   try {
     const context =
       contextData.length > 0
@@ -162,7 +171,7 @@ ${contextData
     (item, index) => `
 [SUMBER ${index + 1}: ${
       item.source?.toUpperCase() || "INTERNAL"
-    } - Relevansi: ${(item.similarity * 100).toFixed(1)}%]
+    } - Relevansi: ${((item.similarity || 0) * 100).toFixed(1)}%]
 ${
   typeof item.data === "object"
     ? JSON.stringify(item.data, null, 2)
@@ -223,9 +232,7 @@ async function hybridChatHandler(request: NextRequest) {
   const db = getDb();
 
   // Try to get user authentication, but don't require it
-  let user = null;
   let userId = null;
-  let isGuestUser = false;
 
   try {
     const authHeader = request.headers.get("authorization");
@@ -233,24 +240,18 @@ async function hybridChatHandler(request: NextRequest) {
       const token = authHeader.substring(7);
       const payload = verifyToken(token);
       if (payload.type === "access") {
-        user = { userId: payload.userId, email: payload.email };
         userId = payload.userId;
       }
     }
-  } catch (error) {
-    console.log("No valid auth token, continuing as guest user");
-    isGuestUser = true;
+  } catch {
+    // No valid auth token, continuing as guest user
   }
 
-  // If no user authentication, we're dealing with a guest
-  if (!userId) {
-    isGuestUser = true;
-  }
+  // Convert chatId to ensure it's a valid UUID string for database
+  let currentChatId = chatId; // No conversion needed since schema validates UUID format
 
-  // Convert chatId to string if it exists (database uses UUID strings)
-  let currentChatId = chatId ? String(chatId) : undefined;
-
-  // For authenticated users - existing logic
+  // Save user message for authenticated users
+  let userMessage = null;
   if (userId) {
     try {
       if (!currentChatId) {
@@ -286,12 +287,15 @@ async function hybridChatHandler(request: NextRequest) {
       }
 
       // Save user message for authenticated users
-      await db.insert(messages).values({
-        chatId: currentChatId,
-        role: "user",
-        content: message,
-        createdAt: new Date(),
-      });
+      [userMessage] = await db
+        .insert(messages)
+        .values({
+          chatId: currentChatId,
+          role: "user",
+          content: message,
+          createdAt: new Date(),
+        })
+        .returning();
     } catch (error) {
       if (error instanceof ApiError) throw error;
       console.error("Database error for authenticated user:", error);
@@ -354,12 +358,17 @@ async function hybridChatHandler(request: NextRequest) {
       }
 
       // Save user message for guest users
-      await db.insert(messages).values({
-        chatId: currentChatId,
-        role: "user",
-        content: message,
-        createdAt: new Date(),
-      });
+      if (!userMessage) {
+        [userMessage] = await db
+          .insert(messages)
+          .values({
+            chatId: currentChatId,
+            role: "user",
+            content: message,
+            createdAt: new Date(),
+          })
+          .returning();
+      }
     } catch (error) {
       if (error instanceof ApiError) throw error;
       console.error("Database error for guest user:", error);
@@ -372,14 +381,18 @@ async function hybridChatHandler(request: NextRequest) {
   const aiResponse = await generateAiResponse(message, ragResults);
 
   // Save AI response for both authenticated and guest users
+  let aiMessage = null;
   if (currentChatId) {
     try {
-      await db.insert(messages).values({
-        chatId: currentChatId,
-        role: "bot",
-        content: aiResponse,
-        createdAt: new Date(),
-      });
+      [aiMessage] = await db
+        .insert(messages)
+        .values({
+          chatId: currentChatId,
+          role: "bot",
+          content: aiResponse,
+          createdAt: new Date(),
+        })
+        .returning();
     } catch (error) {
       console.error("Error saving AI response:", error);
       // Continue without saving - user still gets response
@@ -390,16 +403,33 @@ async function hybridChatHandler(request: NextRequest) {
     success: true,
     data: {
       chatId: currentChatId, // Always return chatId for both user types
-      message: {
-        role: "bot",
-        content: aiResponse,
-      },
+      userMessage: userMessage
+        ? {
+            id: userMessage.id,
+            role: userMessage.role,
+            content: userMessage.content,
+            timestamp: userMessage.createdAt,
+          }
+        : undefined,
+      aiMessage: aiMessage
+        ? {
+            id: aiMessage.id,
+            role: aiMessage.role,
+            content: aiMessage.content,
+            timestamp: aiMessage.createdAt,
+          }
+        : {
+            role: "bot",
+            content: aiResponse,
+          },
       sources: ragResults.map((r) => ({
         title: r.title || "Internal Source",
         source: r.source || "INTERNAL",
       })),
     },
   });
-} // Export the new hybrid handler
+} // Export the new hybrid handler with rate limiting for guest users
 export const POST = (request: NextRequest) =>
-  withMiddleware()(request, hybridChatHandler);
+  withMiddleware(
+    createRateLimitMiddleware(30, 60000) // 30 requests per minute for chat endpoint
+  )(request, hybridChatHandler);

@@ -15,6 +15,13 @@
       "when": 1759147763326,
       "tag": "0001_lethal_rhino",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1759201059084,
+      "tag": "0002_exotic_madrox",
+      "breakpoints": true
     }
   ]
 }

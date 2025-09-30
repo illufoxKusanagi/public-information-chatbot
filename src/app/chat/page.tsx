@@ -189,20 +189,24 @@ export default function ChatPage() {
         <div className="bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-800 p-3">
           <div className="flex items-center justify-center text-sm text-amber-700 dark:text-amber-300">
             <span>
-              ⚠️ Guest Mode: Your chat will be automatically deleted after 24
-              hours.{" "}
+              ⚠️ Mode Tamu: Percakapan anda akan terhapus setelah 24 jam
             </span>
             <Link
               href="/auth/login"
               className="ml-1 underline hover:no-underline font-medium"
             >
-              Login to save permanently
+              Login menyimpan riwayat pesan
             </Link>
           </div>
         </div>
       )}
 
-      <div className="flex absolute gap-4 top-4 right-4 z-10">
+      <div
+        className={cn(
+          "flex absolute gap-4 z-10 right-4",
+          isAuthenticated ? "top-4" : "top-14"
+        )}
+      >
         <ModeToggleButton />
         <HelpButton />
         {isAuthenticated ? (
@@ -217,10 +221,12 @@ export default function ChatPage() {
       </div>
       <SidebarProvider defaultOpen={true}>
         <div className="flex flex-row w-full ">
-          <AppSidebar />
+          {isAuthenticated ? <AppSidebar /> : null}
           <main className="flex flex-col w-full relative">
             <div className="flex bg-secondary min-h-16 w-full items-center justify-center">
-              <SidebarTrigger className="ml-4 absolute left-0 justify-center" />
+              {isAuthenticated ? (
+                <SidebarTrigger className="ml-4 absolute left-0 justify-center" />
+              ) : null}
               <p className="body-medium-bold">
                 {titleLoading
                   ? "Memuat judul..."
@@ -234,7 +240,7 @@ export default function ChatPage() {
                 <ChatHistory isLoading={isLoading} messages={messages} />
               </Suspense>
             </ScrollArea>
-            <div className="flex p-2 justify-center w-full">
+            <div className="flex pt-4 pb-8 justify-center w-full">
               <ChatInput
                 onSendMessage={handleSendMessage}
                 isLoading={isLoading}

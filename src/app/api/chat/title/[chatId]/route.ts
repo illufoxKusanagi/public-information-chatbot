@@ -87,10 +87,10 @@ async function getChatTitleHandler(
 
 async function updateChatTitleHandler(
   request: AuthenticatedRequest & { validatedData?: any },
-  { params }: { params: ChatTitleParams }
+  { params }: { params: Promise<ChatTitleParams> }
 ) {
   const userId = request.user!.userId;
-  const chatId = params.chatId;
+  const chatId = (await params).chatId;
   const { title } = request.validatedData;
 
   // if (isNaN(chatId) || chatId <= 0) {
