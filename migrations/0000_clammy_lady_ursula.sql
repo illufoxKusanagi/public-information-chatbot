@@ -1,9 +1,12 @@
 CREATE TABLE "chat_history" (
-	"id" serial PRIMARY KEY NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"user_id" uuid,
 	"title" text NOT NULL,
 	"messages" jsonb,
-	"created_at" timestamp DEFAULT now()
+	"created_at" timestamp DEFAULT now(),
+	"is_guest_chat" boolean DEFAULT false,
+	"guest_session_id" text,
+	"expires_at" timestamp
 );
 --> statement-breakpoint
 CREATE TABLE "chats" (
@@ -42,7 +45,7 @@ CREATE TABLE "rag_data" (
 --> statement-breakpoint
 CREATE TABLE "users" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"username" text NOT NULL,
+	"username" varchar(50) NOT NULL,
 	"email" text NOT NULL,
 	"role" varchar DEFAULT 'user' NOT NULL,
 	"avatar" text,

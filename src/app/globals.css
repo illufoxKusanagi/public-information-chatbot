@@ -1,10 +1,4 @@
-@import 'tailwindcss';
-@import "tw-animate-css";
-
-@custom-variant dark (&:is(.dark *));
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 /* @theme {
   --font-family-sans: var(--font-open-sans), ui-sans-serif, system-ui, sans-serif;
@@ -74,86 +68,125 @@
   --color-surfaceWhite: #FFFFFF;
 } */
 
-@layer components {
-  .heading-1 {
-    @apply text-4xl font-bold;
-  }
+/* Custom Typography Classes - Converted from @apply to regular CSS for Tailwind v4 compatibility */
+.heading-1 {
+  font-size: 2.25rem;
+  line-height: 2.5rem;
+  font-weight: 700;
+}
 
-  .heading-2 {
-    @apply text-3xl font-bold;
-  }
+.heading-2 {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+  font-weight: 700;
+}
 
-  .heading-3 {
-    @apply text-2xl font-bold;
-  }
+.heading-3 {
+  font-size: 1.5rem;
+  line-height: 2rem;
+  font-weight: 700;
+}
 
-  .heading-4 {
-    @apply text-xl font-bold;
-  }
+.heading-4 {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+  font-weight: 700;
+}
 
-  .body-bigger-regular {
-    @apply text-2xl;
-  }
+.body-bigger-regular {
+  font-size: 1.5rem;
+  line-height: 2rem;
+}
 
-  .body-bigger-bold {
-    @apply text-2xl font-bold;
-  }
+.body-bigger-bold {
+  font-size: 1.5rem;
+  line-height: 2rem;
+  font-weight: 700;
+}
 
-  .body-bigger-italic {
-    @apply text-2xl italic;
-  }
+.body-bigger-italic {
+  font-size: 1.5rem;
+  line-height: 2rem;
+  font-style: italic;
+}
 
-  .body-bigger-bold-italic {
-    @apply text-2xl italic font-bold;
-  }
+.body-bigger-bold-italic {
+  font-size: 1.5rem;
+  line-height: 2rem;
+  font-style: italic;
+  font-weight: 700;
+}
 
-  .body-big-regular {
-    @apply text-xl;
-  }
+.body-big-regular {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+}
 
-  .body-big-bold {
-    @apply text-xl font-bold;
-  }
+.body-big-bold {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+  font-weight: 700;
+}
 
-  .body-big-italic {
-    @apply text-xl italic;
-  }
+.body-big-italic {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+  font-style: italic;
+}
 
-  .body-big-bold-italic {
-    @apply text-xl italic font-bold;
-  }
+.body-big-bold-italic {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+  font-style: italic;
+  font-weight: 700;
+}
 
-  .body-medium-regular {
-    @apply text-base;
-  }
+.body-medium-regular {
+  font-size: 1rem;
+  line-height: 1.5rem;
+}
 
-  .body-medium-bold {
-    @apply text-base font-bold;
-  }
+.body-medium-bold {
+  font-size: 1rem;
+  line-height: 1.5rem;
+  font-weight: 700;
+}
 
-  .body-medium-italic {
-    @apply text-base italic;
-  }
+.body-medium-italic {
+  font-size: 1rem;
+  line-height: 1.5rem;
+  font-style: italic;
+}
 
-  .body-medium-bold-italic {
-    @apply text-base italic font-bold;
-  }
+.body-medium-bold-italic {
+  font-size: 1rem;
+  line-height: 1.5rem;
+  font-style: italic;
+  font-weight: 700;
+}
 
-  .body-small-regular {
-    @apply text-xs;
-  }
+.body-small-regular {
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
 
-  .body-small-bold {
-    @apply text-xs font-bold;
-  }
+.body-small-bold {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 700;
+}
 
-  .body-small-italic {
-    @apply text-xs italic;
-  }
+.body-small-italic {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-style: italic;
+}
 
-  .body-small-bold-italic {
-    @apply text-xs italic font-bold;
-  }
+.body-small-bold-italic {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-style: italic;
+  font-weight: 700;
 }
 
 /* @media (prefers-color-scheme: light) {
@@ -272,10 +305,12 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    border-color: var(--color-border);
+    outline-color: color-mix(in srgb, var(--color-ring), transparent 50%);
   }
 
   body {
-    @apply bg-background text-foreground;
+    background-color: var(--color-background);
+    color: var(--color-foreground);
   }
 }

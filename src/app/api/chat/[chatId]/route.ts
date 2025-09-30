@@ -1,12 +1,11 @@
 import { getDb } from "@/lib/db";
-import { chatHistory, messages } from "@/lib/db/schema";
+import { conversations, messages } from "@/lib/db/schema";
 import {
   withMiddleware,
-  createAuthMiddleware,
   createRateLimitMiddleware,
   ApiError,
-  AuthenticatedRequest,
 } from "@/middleware/api";
+import { verifyToken } from "@/lib/auth/jwt";
 import { eq, and, asc } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -14,45 +13,84 @@ interface ChatParams {
   chatId: string;
 }
 
+// Hybrid handler that supports both authenticated and guest users
 async function getChatHandler(
-  request: AuthenticatedRequest,
+  request: NextRequest,
   { params }: { params: ChatParams }
 ) {
-  const userId = request.user!.userId;
   const chatId = params.chatId;
+  let userId = null;
+  let isAuthenticated = false;
 
-  // if (isNaN(chatId) || chatId <= 0) {
-  //   throw new ApiError("ID chat tidak valid", 400, "INVALID_CHAT_ID");
-  // }
+  // Try to get user authentication, but don't require it
+  try {
+    const authHeader = request.headers.get("authorization");
+    if (authHeader?.startsWith("Bearer ")) {
+      const token = authHeader.substring(7);
+      const payload = verifyToken(token);
+      if (payload.type === "access") {
+        userId = payload.userId;
+        isAuthenticated = true;
+      }
+    }
+  } catch (error) {
+    console.log("No valid auth token, attempting guest access");
+  }
 
-  console.log(`[GET_CHAT] User ${userId} requesting chat ${chatId}`);
+  console.log(
+    `[GET_CHAT] ${
+      isAuthenticated ? "User " + userId : "Guest"
+    } requesting chat ${chatId}`
+  );
 
   try {
     const db = getDb();
 
-    // Verify chat exists and user owns it
+    // Get chat details
     const [chat] = await db
       .select({
-        id: chatHistory.id,
-        title: chatHistory.title,
-        userId: chatHistory.userId,
-        createdAt: chatHistory.createdAt,
-        // updatedAt: chatHistory.updatedAt,
+        id: conversations.id,
+        title: conversations.title,
+        userId: conversations.userId,
+        isGuestChat: conversations.isGuestChat,
+        expiresAt: conversations.expiresAt,
+        createdAt: conversations.createdAt,
       })
-      .from(chatHistory)
-      .where(eq(chatHistory.id, chatId))
+      .from(conversations)
+      .where(eq(conversations.id, chatId))
       .limit(1);
 
     if (!chat) {
       throw new ApiError("Chat tidak ditemukan", 404, "CHAT_NOT_FOUND");
     }
 
-    if (chat.userId !== userId) {
-      throw new ApiError(
-        "Anda tidak memiliki akses ke chat ini",
-        403,
-        "CHAT_ACCESS_DENIED"
-      );
+    // Check access permissions
+    if (chat.isGuestChat) {
+      // For guest chats, check if expired
+      if (chat.expiresAt && new Date() > chat.expiresAt) {
+        throw new ApiError(
+          "Chat sementara telah kedaluwarsa",
+          410,
+          "CHAT_EXPIRED"
+        );
+      }
+      // Guest chats are accessible by anyone
+    } else {
+      // For user chats, must be authenticated and own the chat
+      if (!isAuthenticated) {
+        throw new ApiError(
+          "Autentikasi diperlukan untuk chat pengguna",
+          401,
+          "AUTH_REQUIRED"
+        );
+      }
+      if (chat.userId !== userId) {
+        throw new ApiError(
+          "Anda tidak memiliki akses ke chat ini",
+          403,
+          "CHAT_ACCESS_DENIED"
+        );
+      }
     }
 
     // Get all messages for this chat
@@ -68,7 +106,9 @@ async function getChatHandler(
       .orderBy(asc(messages.createdAt));
 
     console.log(
-      `[GET_CHAT] Found chat ${chatId} with ${chatMessages.length} messages`
+      `[GET_CHAT] Found ${
+        chat.isGuestChat ? "guest" : "user"
+      } chat ${chatId} with ${chatMessages.length} messages`
     );
 
     return NextResponse.json({
@@ -78,7 +118,8 @@ async function getChatHandler(
           id: chat.id,
           title: chat.title,
           createdAt: chat.createdAt,
-          // updatedAt: chat.updatedAt,
+          isGuestChat: chat.isGuestChat || false,
+          expiresAt: chat.expiresAt,
         },
         messages: chatMessages.map((msg) => ({
           id: msg.id,
@@ -96,51 +137,76 @@ async function getChatHandler(
       throw error;
     }
 
-    throw new ApiError(
-      "Gagal mengambil data chat",
-      500,
-      "GET_CHAT_ERROR"
-      //   {
-      //   chatId,
-      //   userId,
-      // }
-    );
+    throw new ApiError("Gagal mengambil data chat", 500, "GET_CHAT_ERROR");
   }
 }
 
+// Hybrid delete handler
 async function deleteChatHandler(
-  request: AuthenticatedRequest,
+  request: NextRequest,
   { params }: { params: ChatParams }
 ) {
-  const userId = request.user!.userId;
   const chatId = params.chatId;
+  let userId = null;
+  let isAuthenticated = false;
 
-  // if (isNaN(chatId) || chatId <= 0) {
-  //   throw new ApiError("ID chat tidak valid", 400, "INVALID_CHAT_ID");
-  // }
+  // Try to get user authentication
+  try {
+    const authHeader = request.headers.get("authorization");
+    if (authHeader?.startsWith("Bearer ")) {
+      const token = authHeader.substring(7);
+      const payload = verifyToken(token);
+      if (payload.type === "access") {
+        userId = payload.userId;
+        isAuthenticated = true;
+      }
+    }
+  } catch (error) {
+    console.log("No valid auth token for delete operation");
+  }
 
-  console.log(`[DELETE_CHAT] User ${userId} deleting chat ${chatId}`);
+  console.log(
+    `[DELETE_CHAT] ${
+      isAuthenticated ? "User " + userId : "Guest"
+    } deleting chat ${chatId}`
+  );
 
   try {
     const db = getDb();
 
-    // Verify chat exists and user owns it
+    // Get chat details to verify access
     const [chat] = await db
-      .select({ userId: chatHistory.userId })
-      .from(chatHistory)
-      .where(eq(chatHistory.id, chatId))
+      .select({
+        userId: conversations.userId,
+        isGuestChat: conversations.isGuestChat,
+        expiresAt: conversations.expiresAt,
+      })
+      .from(conversations)
+      .where(eq(conversations.id, chatId))
       .limit(1);
 
     if (!chat) {
       throw new ApiError("Chat tidak ditemukan", 404, "CHAT_NOT_FOUND");
     }
 
-    if (chat.userId !== userId) {
-      throw new ApiError(
-        "Anda tidak memiliki akses ke chat ini",
-        403,
-        "CHAT_ACCESS_DENIED"
-      );
+    // Check permissions
+    if (chat.isGuestChat) {
+      // Guest chats can be deleted by anyone (for cleanup)
+      if (chat.expiresAt && new Date() > chat.expiresAt) {
+        console.log("Deleting expired guest chat");
+      }
+    } else {
+      // User chats require authentication and ownership
+      if (!isAuthenticated) {
+        throw new ApiError("Autentikasi diperlukan", 401, "AUTH_REQUIRED");
+      }
+      if (chat.userId !== userId) {
+        throw new ApiError(
+          "Anda tidak memiliki akses ke chat ini",
+          403,
+          "CHAT_ACCESS_DENIED"
+        );
+      }
     }
 
     // Delete messages first (foreign key constraint)
@@ -150,10 +216,12 @@ async function deleteChatHandler(
       .returning({ id: messages.id });
 
     // Delete the chat
-    await db.delete(chatHistory).where(eq(chatHistory.id, chatId));
+    await db.delete(conversations).where(eq(conversations.id, chatId));
 
     console.log(
-      `[DELETE_CHAT] Deleted chat ${chatId} and ${deletedMessages.length} messages`
+      `[DELETE_CHAT] Deleted ${
+        chat.isGuestChat ? "guest" : "user"
+      } chat ${chatId} and ${deletedMessages.length} messages`
     );
 
     return NextResponse.json({
@@ -171,23 +239,14 @@ async function deleteChatHandler(
       throw error;
     }
 
-    throw new ApiError(
-      "Gagal menghapus chat",
-      500,
-      "DELETE_CHAT_ERROR"
-      // {
-      //   chatId,
-      //   userId,
-      // }
-    );
+    throw new ApiError("Gagal menghapus chat", 500, "DELETE_CHAT_ERROR");
   }
 }
 
 export const GET = (request: NextRequest, context: { params: ChatParams }) => {
   return withMiddleware(
-    createRateLimitMiddleware(60, 60000), // 60 requests per minute for reading
-    createAuthMiddleware()
-  )(request, (req) => getChatHandler(req, context));
+    createRateLimitMiddleware(60, 60000) // 60 requests per minute for reading
+  )(request, () => getChatHandler(request, context));
 };
 
 export const DELETE = (
@@ -195,112 +254,6 @@ export const DELETE = (
   context: { params: ChatParams }
 ) => {
   return withMiddleware(
-    createRateLimitMiddleware(10, 60000), // 10 deletes per minute
-    createAuthMiddleware()
-  )(request, (req) => deleteChatHandler(req, context));
+    createRateLimitMiddleware(10, 60000) // 10 deletes per minute
+  )(request, () => deleteChatHandler(request, context));
 };
-
-// import { getDb } from "@/lib/db/index";
-// import { chatHistory } from "@/lib/db/schema";
-// import {
-//   getAuthCookie,
-//   getUserFromToken,
-// } from "@/lib/services/auth/auth.service";
-// import { eq, and } from "drizzle-orm";
-// import { NextRequest, NextResponse } from "next/server";
-
-// interface RouteParams {
-//   params: {
-//     chatId: string;
-//   };
-// }
-
-// const db = getDb();
-
-// export async function GET(request: NextRequest, { params }: RouteParams) {
-//   try {
-//     const token = await getAuthCookie();
-
-//     if (!token) {
-//       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-//     }
-
-//     const user = await getUserFromToken(token);
-
-//     if (!user) {
-//       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-//     }
-
-//     const chatId = parseInt(params.chatId);
-
-//     if (isNaN(chatId)) {
-//       return NextResponse.json({ error: "Invalid chat ID" }, { status: 400 });
-//     }
-
-//     const chat = await db.query.chatHistory.findFirst({
-//       where: and(eq(chatHistory.id, chatId), eq(chatHistory.userId, user.id)),
-//     });
-
-//     if (!chat) {
-//       return NextResponse.json(
-//         { error: "Chat not found or access denied" },
-//         { status: 404 }
-//       );
-//     }
-
-//     return NextResponse.json(chat);
-//   } catch (error) {
-//     console.error("Error fetching chat:", error);
-//     return NextResponse.json(
-//       { error: "Failed to fetch chat" },
-//       { status: 500 }
-//     );
-//   }
-// }
-
-// export async function DELETE(request: NextRequest, { params }: RouteParams) {
-//   try {
-//     // CSRF guard: allow only same-origin requests
-//     const origin = request.headers.get("origin");
-//     if (origin) {
-//       const reqHost = request.nextUrl.host;
-//       const originHost = new URL(origin).host;
-//       if (originHost !== reqHost) {
-//         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-//       }
-//     }
-//     // Edited Here: Get authenticated user for deletion
-//     const token = await getAuthCookie();
-//     if (!token) {
-//       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-//     }
-
-//     const user = await getUserFromToken(token);
-//     if (!user) {
-//       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-//     }
-
-//     const chatId = parseInt(params.chatId);
-//     if (isNaN(chatId)) {
-//       return NextResponse.json({ error: "Invalid chat ID" }, { status: 400 });
-//     }
-//     const deletedChat = await db
-//       .delete(chatHistory)
-//       .where(and(eq(chatHistory.id, chatId), eq(chatHistory.userId, user.id)))
-//       .returning();
-//     if (deletedChat.length === 0) {
-//       return NextResponse.json(
-//         { error: "Chat not found or access denied" },
-//         { status: 404 }
-//       );
-//     }
-
-//     return NextResponse.json({ message: "Chat deleted successfully" });
-//   } catch (error) {
-//     console.error("Error deleting chat:", error);
-//     return NextResponse.json(
-//       { error: "Failed to delete chat" },
-//       { status: 500 }
-//     );
-//   }
-// }

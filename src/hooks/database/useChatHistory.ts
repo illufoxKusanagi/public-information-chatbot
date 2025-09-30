@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { getDb } from "@/lib/db"; // Edited here: Fixed import
-import { chatHistory } from "@/lib/db/schema";
+import { conversations } from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
 
 interface ChatHistoryItem {
@@ -28,9 +28,9 @@ export function useChatHistory(userId: string) {
       const db = getDb(); // Edited here: Get db instance
       const results = await db
         .select()
-        .from(chatHistory)
-        .where(eq(chatHistory.userId, userId))
-        .orderBy(desc(chatHistory.createdAt));
+        .from(conversations)
+        .where(eq(conversations.userId, userId))
+        .orderBy(desc(conversations.createdAt));
 
       setHistory(results);
     } catch (err) {

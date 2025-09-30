@@ -1,5 +1,5 @@
 import { getDb } from "@/lib/db";
-import { chatHistory } from "@/lib/db/schema";
+import { conversations } from "@/lib/db/schema";
 import {
   withMiddleware,
   createAuthMiddleware,
@@ -40,11 +40,11 @@ async function getChatTitleHandler(
 
     const [chat] = await db
       .select({
-        title: chatHistory.title,
-        userId: chatHistory.userId,
+        title: conversations.title,
+        userId: conversations.userId,
       })
-      .from(chatHistory)
-      .where(eq(chatHistory.id, chatId))
+      .from(conversations)
+      .where(eq(conversations.id, chatId))
       .limit(1);
 
     if (!chat) {
@@ -106,9 +106,9 @@ async function updateChatTitleHandler(
 
     // Verify chat exists and user owns it
     const [existingChat] = await db
-      .select({ userId: chatHistory.userId })
-      .from(chatHistory)
-      .where(eq(chatHistory.id, chatId))
+      .select({ userId: conversations.userId })
+      .from(conversations)
+      .where(eq(conversations.id, chatId))
       .limit(1);
 
     if (!existingChat) {
@@ -125,16 +125,16 @@ async function updateChatTitleHandler(
 
     // Update the title
     const [updatedChat] = await db
-      .update(chatHistory)
+      .update(conversations)
       .set({
         title,
         // updatedAt: new Date(),
       })
-      .where(eq(chatHistory.id, chatId))
+      .where(eq(conversations.id, chatId))
       .returning({
-        id: chatHistory.id,
-        title: chatHistory.title,
-        // updatedAt: chatHistory.updatedAt,
+        id: conversations.id,
+        title: conversations.title,
+        // updatedAt: conversations.updatedAt,
       });
 
     console.log(`[UPDATE_TITLE] Successfully updated title for chat ${chatId}`);
@@ -187,168 +187,3 @@ export const PUT = (
     createValidationMiddleware(updateTitleSchema)
   )(request, (req) => updateChatTitleHandler(req, context));
 };
-
-// import { getChatHistoryTitleWithAuth } from "@/lib/services/ai/rag.service";
-// import {
-//   getAuthCookie,
-//   getUserFromToken,
-// } from "@/lib/services/auth/auth.service";
-// import { NextRequest, NextResponse } from "next/server";
-
-// // Edited Here: Changed parameter destructuring to match [chatId] file name
-// export async function GET(
-//   request: NextRequest,
-//   { params }: { params: { chatId: string } }
-// ) {
-//   try {
-//     const token = getAuthCookie();
-
-//     if (!token) {
-//       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-//     }
-
-//     const user = await getUserFromToken(token);
-
-//     if (!user) {
-//       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-//     }
-
-//     // Edited Here: Use params.chatId instead of params.id
-//     const chatIdString = params.chatId;
-//     console.log("Received chatId parameter:", chatIdString);
-
-//     if (!chatIdString || chatIdString.trim() === "") {
-//       return NextResponse.json(
-//         { error: "Chat ID is required" },
-//         { status: 400 }
-//       );
-//     }
-
-//     const chatId = parseInt(chatIdString, 10);
-
-//     if (isNaN(chatId) || chatId <= 0) {
-//       console.log("Invalid chatId:", chatIdString, "parsed as:", chatId);
-//       return NextResponse.json(
-//         { error: "Invalid chat ID format" },
-//         { status: 400 }
-//       );
-//     }
-
-//     console.log("Fetching title for chatId:", chatId, "userId:", user.id);
-
-//     const result = await getChatHistoryTitleWithAuth(chatId, user.id);
-
-//     if (!result.success) {
-//       console.log("Failed to get chat title:", result.error);
-//       return NextResponse.json(
-//         { error: result.error },
-//         { status: result.error?.includes("access denied") ? 403 : 404 }
-//       );
-//     }
-
-//     return NextResponse.json({ title: result.title });
-//   } catch (error) {
-//     console.error("Error fetching chat title:", error);
-//     return NextResponse.json(
-//       { error: "Failed to fetch chat title" },
-//       { status: 500 }
-//     );
-//   }
-// }
-
-// // import { getChatHistoryTitleWithAuth } from "@/lib/services/ai/rag.service";
-// // import {
-// //   getAuthCookie,
-// //   getUserFromToken,
-// // } from "@/lib/services/auth/auth.service";
-// // import { NextRequest, NextResponse } from "next/server";
-
-// // export async function GET(
-// //   request: NextRequest,
-// //   { params }: { params: { id: string } }
-// // ) {
-// //   try {
-// //     // Edited Here: Get authenticated user instead of allowing anonymous access
-// //     const token = getAuthCookie();
-
-// //     if (!token) {
-// //       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-// //     }
-
-// //     const user = await getUserFromToken(token);
-
-// //     if (!user) {
-// //       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-// //     }
-
-// //     const chatId = parseInt(params.id);
-
-// //     if (isNaN(chatId)) {
-// //       return NextResponse.json({ error: "Invalid chat ID" }, { status: 400 });
-// //     }
-
-// //     // Edited Here: Use the authenticated user ID instead of hardcoded value
-// //     const result = await getChatHistoryTitleWithAuth(chatId, user.id);
-
-// //     if (!result.success) {
-// //       return NextResponse.json(
-// //         { error: result.error },
-// //         { status: result.error?.includes("access denied") ? 403 : 404 }
-// //       );
-// //     }
-
-// //     return NextResponse.json({ title: result.title });
-// //   } catch (error) {
-// //     console.error("Error fetching chat title:", error);
-// //     return NextResponse.json(
-// //       { error: "Failed to fetch chat title" },
-// //       { status: 500 }
-// //     );
-// //   }
-// // }
-
-// // import { getChatHistoryTitleWithAuth } from "@/lib/services/ai/rag.service";
-// // import {
-// //   getAuthCookie,
-// //   getUserFromToken,
-// // } from "@/lib/services/auth/auth.service";
-// // import { NextRequest, NextResponse } from "next/server";
-
-// // // For App Router
-// // export async function GET(
-// //   request: NextRequest,
-// //   { params }: { params: { id: string } }
-// // ) {
-// //   try {
-// //     const token = getAuthCookie();
-// //     if (!token) {
-// //       return NextResponse.json(
-// //         { message: "Unauthorized - Tidak ada token" },
-// //         { status: 401 }
-// //       );
-// //     }
-// //     const user = await getUserFromToken(token);
-// //     if (!user) {
-// //       return NextResponse.json(
-// //         { message: "Unauthorized - Token tidak valid" },
-// //         { status: 401 }
-// //       );
-// //     }
-// //     const chatId = parseInt(params.id);
-// //     const result = await getChatHistoryTitleWithAuth(chatId, user.id);
-// //     if (!result.success) {
-// //       return NextResponse.json(
-// //         { error: result.error },
-// //         { status: result.error?.includes("access denied") ? 403 : 404 }
-// //       );
-// //     }
-
-// //     return NextResponse.json({ title: result.title });
-// //   } catch (error) {
-// //     console.error("API Error:", error);
-// //     return NextResponse.json(
-// //       { error: "Failed to fetch chat title" },
-// //       { status: 500 }
-// //     );
-// //   }
-// // }

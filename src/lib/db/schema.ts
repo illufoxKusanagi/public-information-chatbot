@@ -24,20 +24,10 @@ export const users = pgTable("users", {
   lastLogin: timestamp("last_login"),
 });
 
-export const chats = pgTable("chats", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  userId: uuid("user_id")
-    .references(() => users.id)
-    .notNull(),
-  title: varchar("title", { length: 255 }).notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
-
 export const messages = pgTable("messages", {
   id: uuid("id").defaultRandom().primaryKey(),
   chatId: uuid("chat_id")
-    .references(() => users.id)
+    .references(() => conversations.id)
     .notNull(),
   role: varchar("role", { length: 20 }).notNull(), // user or bot
   content: text("content").notNull(),
@@ -66,12 +56,15 @@ export const ragData = pgTable("rag_data", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-export const chatHistory = pgTable("chat_history", {
+export const conversations = pgTable("chat_history", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }),
   title: text("title").notNull(),
-  messages: jsonb("messages"),
   createdAt: timestamp("created_at").defaultNow(),
+  // Add fields for guest chat support
+  isGuestChat: boolean("is_guest_chat").default(false),
+  guestSessionId: text("guest_session_id"), // For identifying guest sessions
+  expiresAt: timestamp("expires_at"), // For auto-deletion
 });
 
 export type InsertUser = typeof users.$inferInsert;
@@ -80,5 +73,5 @@ export type SelectUser = typeof users.$inferSelect;
 export type InsertRagData = typeof ragData.$inferInsert;
 export type SelectRagData = typeof ragData.$inferSelect;
 
-export type InsertChatHistory = typeof chatHistory.$inferInsert;
-export type SelectChatHistory = typeof chatHistory.$inferSelect;
+export type Insertconversations = typeof conversations.$inferInsert;
+export type Selectconversations = typeof conversations.$inferSelect;

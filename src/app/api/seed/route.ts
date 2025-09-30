@@ -2,7 +2,7 @@
 
 import { db } from "@/lib/db/index";
 import { ragData } from "@/lib/db/schema";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 import { NextResponse } from "next/server";
 
 // Impor data mentah Anda yang sudah lengkap dengan 'content' dan 'data'

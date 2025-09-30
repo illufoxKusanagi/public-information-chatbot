@@ -1,5 +1,5 @@
 import { getDb } from "@/lib/db";
-import { chatHistory, messages } from "@/lib/db/schema";
+import { conversations, messages } from "@/lib/db/schema";
 import {
   withMiddleware,
   createAuthMiddleware,
@@ -21,24 +21,24 @@ async function getChatHistoryHandler(request: AuthenticatedRequest) {
     // Get chat history with message counts
     const chats = await db
       .select({
-        id: chatHistory.id,
-        title: chatHistory.title,
-        createdAt: chatHistory.createdAt,
-        // updatedAt: chatHistory.updatedAt,
+        id: conversations.id,
+        title: conversations.title,
+        createdAt: conversations.createdAt,
+        // updatedAt: conversations.updatedAt,
         messageCount: sql<number>`(
           SELECT COUNT(*) FROM ${messages} 
-          WHERE ${messages.chatId} = ${chatHistory.id}
+          WHERE ${messages.chatId} = ${conversations.id}
         )`.as("message_count"),
         lastMessage: sql<string>`(
           SELECT ${messages.content} FROM ${messages} 
-          WHERE ${messages.chatId} = ${chatHistory.id}
+          WHERE ${messages.chatId} = ${conversations.id}
           ORDER BY ${messages.createdAt} DESC 
           LIMIT 1
         )`.as("last_message"),
       })
-      .from(chatHistory)
-      .where(eq(chatHistory.userId, userId))
-      // .orderBy(desc(chatHistory.updatedAt))
+      .from(conversations)
+      .where(eq(conversations.userId, userId))
+      // .orderBy(desc(conversations.updatedAt))
       .limit(50); // Limit to last 50 chats
 
     console.log(
@@ -80,80 +80,3 @@ export const GET = (request: NextRequest) => {
     createAuthMiddleware()
   )(request, getChatHistoryHandler);
 };
-
-// import { useAuth } from "@/app/context/auth-context";
-// import { getDb } from "@/lib/db/index";
-// import { chatHistory } from "@/lib/db/schema";
-// // import {
-// //   getAuthCookie,
-// //   getUserFromToken,
-// // } from "@/lib/services/auth/auth.service";
-// import { eq } from "drizzle-orm";
-// import { NextRequest, NextResponse } from "next/server";
-
-// const db = getDb();
-
-// export async function GET(request: NextRequest) {
-//   try {
-//     const token = await getAuthCookie();
-//     if (!token) {
-//       return NextResponse.json(
-//         { error: "Unauthorized - Tidak ada token" },
-//         { status: 401 }
-//       );
-//     }
-//     const user = await getUserFromToken(token);
-//     if (!user) {
-//       return NextResponse.json(
-//         { message: "Unauthorized - Token tidak valid" },
-//         { status: 401 }
-//       );
-//     }
-//     const userId = user.id;
-//     const history = await db.query.chatHistory.findMany({
-//       where: eq(chatHistory.userId, userId),
-//       orderBy: (chats, { desc }) => [desc(chats.createdAt)],
-//     });
-//     return NextResponse.json(history);
-//   } catch (error) {
-//     return NextResponse.json(
-//       { error: "Gagal untuk fetch chat history" },
-//       { status: 500 }
-//     );
-//   }
-// }
-
-// export async function POST(request: NextRequest) {
-//   try {
-//     const token = getAuthCookie();
-//     if (!token) {
-//       return NextResponse.json(
-//         { message: "Unauthorized - Tidak ada token" },
-//         { status: 401 }
-//       );
-//     }
-//     const user = await getUserFromToken(token);
-//     if (!user) {
-//       return NextResponse.json(
-//         { message: "Unauthorized - Token tidak valid" },
-//         { status: 401 }
-//       );
-//     }
-//     const userId = user.id;
-//     const newChat = await db
-//       .insert(chatHistory)
-//       .values({
-//         userId: userId,
-//         title: "Chat baru",
-//         messages: [],
-//       })
-//       .returning();
-//     return NextResponse.json(newChat[0], { status: 200 });
-//   } catch (error) {
-//     console.error(error);
-//     return NextResponse.json(
-//       { error: "Gagal membuat history chat" },
-//       { status: 500 }
-//     );
-//   }
-// }

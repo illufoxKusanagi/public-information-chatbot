@@ -1,40 +1,3 @@
-// // Add this to your existing AppSidebar component
-
-// import { useAuth } from "@/app/context/auth-context";
-// import { Button } from "@/components/ui/button";
-// import { LogOut, User } from "lucide-react";
-
-// // Edited Here: Add user section to sidebar
-// export function AppSidebar() {
-//   const { user, logout, isAuthenticated } = useAuth();
-
-//   return (
-//     <div className="sidebar">
-//       {/* ...existing sidebar content... */}
-
-//       {/* Edited Here: Add user section at bottom of sidebar */}
-//       {isAuthenticated && user && (
-//         <div className="mt-auto p-4 border-t">
-//           <div className="flex items-center gap-2 mb-2">
-//             <User className="h-4 w-4" />
-//             <span className="text-sm font-medium">{user.name}</span>
-//           </div>
-//           <div className="text-xs text-muted-foreground mb-2">{user.email}</div>
-//           <Button
-//             variant="outline"
-//             size="sm"
-//             onClick={logout}
-//             className="w-full"
-//           >
-//             <LogOut className="h-4 w-4 mr-2" />
-//             Logout
-//           </Button>
-//         </div>
-//       )}
-//     </div>
-//   );
-// }
-
 "use client";
 import { LogOut, Plus, User } from "lucide-react";
 
@@ -67,12 +30,12 @@ interface ChatHistoryItem {
 
 export function AppSidebar() {
   const { open } = useSidebar();
-  const [chatHistory, setChatHistory] = useState<ChatHistoryItem[]>([]);
+  const [conversations, setChatHistory] = useState<ChatHistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { user, isAuthenticated } = useAuth();
   const data = {
     user: {
-      name: user?.name || "Guest",
+      name: user?.username || "Guest",
       email: user?.email || "guest@example.com",
       avatar: "/avatars/shadcn.jpg",
     },
@@ -169,8 +132,8 @@ export function AppSidebar() {
                             <span>Loading...</span>
                           </SidebarMenuButton>
                         </SidebarMenuItem>
-                      ) : chatHistory.length > 0 ? (
-                        chatHistory.map((chat) => (
+                      ) : conversations.length > 0 ? (
+                        conversations.map((chat) => (
                           <SidebarMenuItem key={chat.id}>
                             <SidebarMenuButton asChild>
                               <Link href={`/chat?id=${chat.id}`}>

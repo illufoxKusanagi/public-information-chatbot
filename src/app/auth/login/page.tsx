@@ -91,40 +91,6 @@ export default function LoginPage() {
       }
     }
   };
-  // const router = useRouter();
-  // const form = useForm<FormData>({
-  //   resolver: zodResolver(schema),
-  //   defaultValues: {
-  //     identifier: "",
-  //     password: "",
-  //   },
-  // });
-
-  // const onSubmit: SubmitHandler<FormData> = async (data) => {
-  //   try {
-  //     const response = await fetch("/api/auth/login", {
-  //       method: "POST",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //       },
-  //       body: JSON.stringify(data),
-  //     });
-  //     const result = await response.json();
-  //     if (!response.ok) {
-  //       form.setError("root", {
-  //         type: "manual",
-  //         message: `Login gagal, silahkan coba lagi: ${result.error}`,
-  //       });
-  //       return;
-  //     }
-  //     toast.success(
-  //       `Login berhasil, Okaerinasai, ${result.data.user.name}-san!`
-  //     );
-  //     router.push("/");
-  //   } catch (error) {
-  //     toast.error(`Login gagal, silahkan coba lagi: ${error}`);
-  //   }
-  // };
 
   if (isLoading) {
     return (

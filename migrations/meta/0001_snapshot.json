@@ -1,6 +1,6 @@
 {
-  "id": "8f5f58e1-9142-4241-96ee-435ce310bab3",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "0843195f-6269-4de2-93eb-5a979f277ce8",
+  "prevId": "8f5f58e1-9142-4241-96ee-435ce310bab3",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -181,10 +181,10 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "messages_chat_id_users_id_fk": {
-          "name": "messages_chat_id_users_id_fk",
+        "messages_chat_id_chat_history_id_fk": {
+          "name": "messages_chat_id_chat_history_id_fk",
           "tableFrom": "messages",
-          "tableTo": "users",
+          "tableTo": "chat_history",
           "columnsFrom": [
             "chat_id"
           ],

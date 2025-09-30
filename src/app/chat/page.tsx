@@ -116,34 +116,31 @@ export default function ChatPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const chatIdParam = searchParams.get("id");
-  const chatId = chatIdParam ? parseInt(chatIdParam, 10) : null;
+  const chatId = chatIdParam; // Keep as string (UUID), don't parse as integer
   const [chatTitle, setChatTitle] = useState<string>("");
   const [titleLoading, setTitleLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Edited Here: Remove authentication requirement - allow both authenticated and unauthenticated users
   const { isAuthenticated, isLoading: authLoading, user } = useAuth();
 
-  useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      router.push("/auth/login");
-      return;
-    }
-  }, [isAuthenticated, authLoading, router]);
-
-  useEffect(() => {
-    if (!isAuthenticated || authLoading) return;
-    const currentPath = window.location.pathname;
-    if (currentPath === "/" || (currentPath !== "/chat" && !chatId)) {
-      router.push("/chat");
-    }
-  }, [isAuthenticated, authLoading, chatId, router]);
+  // Removed the redirect logic that was preventing guest users from accessing specific chat IDs
+  // Guest users can now access both /chat and /chat?id=... URLs
 
   useEffect(() => {
     const fetchTitle = async () => {
-      if (!isAuthenticated || authLoading) {
+      // Edited Here: Only fetch title if user is authenticated and has access to chat history
+      if (!isAuthenticated || authLoading || !user) {
+        if (chatId) {
+          setChatTitle(`Chat #${chatId}`);
+        } else {
+          setChatTitle("Chat Baru");
+        }
+        setTitleLoading(false);
         return;
       }
 
-      if (chatId && !isNaN(chatId)) {
+      if (chatId && chatId.trim()) {
         setTitleLoading(true);
         setError(null);
         console.log(`chat id adalah: ${chatId}`);
@@ -181,99 +178,30 @@ export default function ChatPage() {
 
     fetchTitle();
     console.log(`isAuthenticated is: ${isAuthenticated}`);
-  }, [chatId, isAuthenticated, authLoading]);
+  }, [chatId, isAuthenticated, authLoading, user]);
 
-  if (authLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
-          <p>Loading...</p>
-        </div>
-      </div>
-    );
-  }
-  // export default function ChatPage() {
-  //   const { messages, isLoading, handleSendMessage } = useChat();
-  //   const searchParams = useSearchParams();
-  //   const router = useRouter();
-  //   const chatIdParam = searchParams.get("id");
-  //   const chatId = chatIdParam ? parseInt(chatIdParam, 10) : null;
-
-  //   const [chatTitle, setChatTitle] = useState<string>("");
-  //   const [titleLoading, setTitleLoading] = useState<boolean>(true);
-  //   const [error, setError] = useState<string | null>(null);
-
-  //   // Edited Here: Add authentication check
-  //   const { isAuthenticated, isLoading: authLoading, user } = useAuth();
-
-  //   // Edited Here: Redirect to login if not authenticated
-  //   useEffect(() => {
-  //     if (!authLoading && !isAuthenticated) {
-  //       router.push("/auth/login");
-  //       return;
-  //     }
-  //   }, [isAuthenticated, authLoading, router]);
-
-  //   // ✅ Updated to use API route instead of direct database call
-  //   useEffect(() => {
-  //     const fetchTitle = async () => {
-  //       if (!isAuthenticated || authLoading) {
-  //         return;
-  //       }
-  //       if (chatId && !isNaN(chatId)) {
-  //         setTitleLoading(true);
-  //         setError(null);
-  //         console.log(`chat id adalah: ${chatId}`);
-  //         try {
-  //           const response = await fetch(`/api/chat/title/${chatId}`);
-  //           if (!response.ok) {
-  //             if (response.status === 404) {
-  //               throw new Error("Chat tidak ditemukan");
-  //             } else if (response.status === 403) {
-  //               throw new Error("Akses ditolak");
-  //             } else {
-  //               throw new Error(`HTTP error! status: ${response.status}`);
-  //             }
-  //           }
-  //           const data = await response.json();
-  //           if (data.error) {
-  //             throw new Error(data.error);
-  //           }
-  //           setChatTitle(data.title || `Chat #${chatId}`);
-  //         } catch (error) {
-  //           console.error("Failed to fetch chat title:", error);
-  //           setChatTitle(`Chat #${chatId}`);
-  //           setError(error instanceof Error ? error.message : "Unknown error");
-  //         } finally {
-  //           setTitleLoading(false);
-  //         }
-  //       } else {
-  //         setChatTitle("New Chat");
-  //         setTitleLoading(false);
-  //       }
-  //     };
-  //     fetchTitle();
-  //     console.log(`isAuthenticated is: ${isAuthenticated}`);
-  //   }, [chatId, isAuthenticated, authLoading]);
-
-  //   if (authLoading) {
-  //     return (
-  //       <div className="flex items-center justify-center min-h-screen">
-  //         <div className="text-center">
-  //           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
-  //           <p>Loading...</p>
-  //         </div>
-  //       </div>
-  //     );
-  //   }
   console.log(`Is authenticated in chat page: ${isAuthenticated}`);
-  if (!isAuthenticated) {
-    return null;
-  }
 
   return (
     <div className="flex flex-col h-screen relative overflow-hidden">
+      {/* Guest User Notice */}
+      {!isAuthenticated && (
+        <div className="bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-800 p-3">
+          <div className="flex items-center justify-center text-sm text-amber-700 dark:text-amber-300">
+            <span>
+              ⚠️ Guest Mode: Your chat will be automatically deleted after 24
+              hours.{" "}
+            </span>
+            <Link
+              href="/auth/login"
+              className="ml-1 underline hover:no-underline font-medium"
+            >
+              Login to save permanently
+            </Link>
+          </div>
+        </div>
+      )}
+
       <div className="flex absolute gap-4 top-4 right-4 z-10">
         <ModeToggleButton />
         <HelpButton />

@@ -16,7 +16,8 @@ export default function Home() {
   const { isAuthenticated, user, isLoading } = useAuth();
   const [dbStatus, setDbStatus] = useState<string>("");
   const [isDbLoading, setIsDbLoading] = useState<boolean>(false);
-  console.log("Is authenticated in login route: ", isAuthenticated);
+
+  console.log("Is authenticated in home page: ", isAuthenticated);
 
   const insertTestRagData = async () => {
     setIsDbLoading(true);
@@ -38,27 +39,11 @@ export default function Home() {
       setIsDbLoading(false);
     }
   };
-  // Show loading screen while checking auth
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Checking authentication...</p>
-        </div>
-      </div>
-    );
-  }
-  // Redirect to login if not authenticated
-  if (!isAuthenticated) {
-    if (typeof window !== "undefined") {
-      window.location.href = "/auth/login";
-    }
-    return null;
-  }
+
+  // Home page should be accessible to everyone - no authentication blocking
   return (
     <div className="flex flex-col h-screen relative">
-      <div className="flex gap-4 absolute top-4 right-4">
+      <div className="flex gap-4 absolute top-4 right-4 z-10">
         <ModeToggleButton />
         <HelpButton />
         {!isAuthenticated ? (
@@ -67,7 +52,7 @@ export default function Home() {
           </Link>
         ) : (
           <div className="flex items-center">
-            <p className="body-medium-regular">Halo, {user?.username}</p>
+            <p className="body-medium-regular">Halo, {user?.name}</p>
           </div>
         )}
       </div>
@@ -93,15 +78,15 @@ export default function Home() {
             </Link>
           </span>
         </p>
-        {/* {dbStatus && <p className="text-sm font-medium">{dbStatus}</p>}
+        {dbStatus && <p className="text-sm font-medium">{dbStatus}</p>}
         <Button
           onClick={insertTestRagData}
-          disabled={isLoading}
+          disabled={isDbLoading}
           variant="outline"
         >
           <Bubbles size="icon" className="m-2" />
           {isDbLoading ? "Testing..." : "Test Database"}
-        </Button> */}
+        </Button>
       </footer>
     </div>
   );
