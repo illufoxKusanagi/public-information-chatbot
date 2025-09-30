@@ -179,7 +179,7 @@ export const GET = (
 
 export const PUT = (
   request: NextRequest,
-  context: { params: ChatTitleParams }
+  context: { params: Promise<ChatTitleParams> }
 ) => {
   return withMiddleware(
     createRateLimitMiddleware(20, 60000),

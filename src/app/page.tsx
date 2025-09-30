@@ -12,33 +12,32 @@ import { Button } from "@/components/ui/button";
 import { Bubbles } from "lucide-react";
 
 export default function Home() {
-  const [isOpen, setIsOpen] = useState(true);
   const { isAuthenticated, user, isLoading } = useAuth();
   const [dbStatus, setDbStatus] = useState<string>("");
-  const [isDbLoading, setIsDbLoading] = useState<boolean>(false);
+  // const [isDbLoading, setIsDbLoading] = useState<boolean>(false);
 
   console.log("Is authenticated in home page: ", isAuthenticated);
 
-  const insertTestRagData = async () => {
-    setIsDbLoading(true);
-    setDbStatus("");
-    try {
-      const response = await fetch("/api/rag/data", {
-        method: "POST",
-      });
-      const result = await response.json();
-      if (response.ok) {
-        setDbStatus("Insert rag datas succesful!");
-      } else {
-        console.error("Error inserting data:", result.error);
-        setDbStatus(`Error: ${result.message}`);
-      }
-    } catch (error) {
-      setDbStatus(`Error: ${(error as Error).message}`);
-    } finally {
-      setIsDbLoading(false);
-    }
-  };
+  // const insertTestRagData = async () => {
+  //   setIsDbLoading(true);
+  //   setDbStatus("");
+  //   try {
+  //     const response = await fetch("/api/rag/data", {
+  //       method: "POST",
+  //     });
+  //     const result = await response.json();
+  //     if (response.ok) {
+  //       setDbStatus("Insert rag datas succesful!");
+  //     } else {
+  //       console.error("Error inserting data:", result.error);
+  //       setDbStatus(`Error: ${result.message}`);
+  //     }
+  //   } catch (error) {
+  //     setDbStatus(`Error: ${(error as Error).message}`);
+  //   } finally {
+  //     setIsDbLoading(false);
+  //   }
+  // };
 
   // Home page should be accessible to everyone - no authentication blocking
   return (
@@ -52,14 +51,18 @@ export default function Home() {
           </Link>
         ) : (
           <div className="flex items-center">
-            <p className="body-medium-regular">Halo, {user?.name}</p>
+            <p className="body-medium-regular">Halo, {user?.username}</p>
           </div>
         )}
       </div>
       <SidebarProvider defaultOpen={true}>
         <div className="flex flex-row h-full w-full">
-          {isOpen && <AppSidebar />}
-          <SidebarTrigger className="ml-4 mt-4" size={"xl"} />
+          {isAuthenticated && (
+            <>
+              <AppSidebar />
+              <SidebarTrigger className="ml-4 mt-4" size={"xl"} />
+            </>
+          )}
           <main className="flex-1 overflow-y-auto">
             <MainContent />
           </main>
@@ -78,7 +81,7 @@ export default function Home() {
             </Link>
           </span>
         </p>
-        {dbStatus && <p className="text-sm font-medium">{dbStatus}</p>}
+        {/* {dbStatus && <p className="text-sm font-medium">{dbStatus}</p>}
         <Button
           onClick={insertTestRagData}
           disabled={isDbLoading}
@@ -86,7 +89,7 @@ export default function Home() {
         >
           <Bubbles size="icon" className="m-2" />
           {isDbLoading ? "Testing..." : "Test Database"}
-        </Button>
+        </Button> */}
       </footer>
     </div>
   );

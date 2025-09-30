@@ -262,7 +262,10 @@ async function deleteChatHandler(
   }
 }
 
-export const GET = (request: NextRequest, context: { params: ChatParams }) => {
+export const GET = (
+  request: NextRequest,
+  context: { params: Promise<ChatParams> }
+) => {
   return withMiddleware(
     createRateLimitMiddleware(60, 60000) // 60 requests per minute for reading
   )(request, () => getChatHandler(request, context));
