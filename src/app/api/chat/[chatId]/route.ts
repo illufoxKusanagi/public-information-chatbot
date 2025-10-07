@@ -13,7 +13,6 @@ interface ChatParams {
   chatId: string;
 }
 
-// Hybrid handler that supports both authenticated and guest users
 async function getChatHandler(
   request: NextRequest,
   { params }: { params: Promise<ChatParams> }
@@ -22,13 +21,11 @@ async function getChatHandler(
   let userId = null;
   let isAuthenticated = false;
 
-  // Get pagination parameters from query string
   const url = new URL(request.url);
   const page = parseInt(url.searchParams.get("page") || "1");
-  const limit = Math.min(parseInt(url.searchParams.get("limit") || "50"), 100); // Max 100 messages per page
+  const limit = Math.min(parseInt(url.searchParams.get("limit") || "50"), 100);
   const offset = (page - 1) * limit;
 
-  // Try to get user authentication, but don't require it
   try {
     const authHeader = request.headers.get("authorization");
     if (authHeader?.startsWith("Bearer ")) {
@@ -46,7 +43,6 @@ async function getChatHandler(
   try {
     const db = getDb();
 
-    // Get chat info
     const [chat] = await db
       .select({
         id: conversations.id,
@@ -64,7 +60,6 @@ async function getChatHandler(
       throw new ApiError("Chat tidak ditemukan", 404, "CHAT_NOT_FOUND");
     }
 
-    // For guest chats, check if expired
     if (chat.isGuestChat) {
       if (chat.expiresAt && new Date() > chat.expiresAt) {
         throw new ApiError(
@@ -91,7 +86,6 @@ async function getChatHandler(
       }
     }
 
-    // Get total message count for pagination
     const [{ totalMessages }] = await db
       .select({
         totalMessages: sql<number>`COUNT(*)`.as("total_messages"),
@@ -99,7 +93,6 @@ async function getChatHandler(
       .from(messages)
       .where(eq(messages.chatId, chatId));
 
-    // Get paginated messages for this chat
     const chatMessages = await db
       .select({
         id: messages.id,
